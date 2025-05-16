@@ -63,7 +63,7 @@ class UserController extends Controller
         }
     }
 
-    public function register(Request $request)
+    public function CreacionDeUsuarios(Request $request)
     {
         // Validate the request with validator library
         $validator = Validator::make($request->all(), [
