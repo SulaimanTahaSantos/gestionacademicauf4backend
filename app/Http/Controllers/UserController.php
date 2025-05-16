@@ -63,38 +63,43 @@ class UserController extends Controller
         }
     }
 
-    public function CreacionDeUsuarios(Request $request)
-    {
-        // Validate the request with validator library
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'surname' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
-            'dni' => 'required|string|unique:users,dni',
-            'rol' => 'required|string|in:user,alumno,admin',
-        ]);
-        
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+    public function register(Request $request){
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'surname' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'password' => 'required|string|min:8',
+                'dni' => 'required|string|unique:users,dni',
+                'rol' => 'required|string|in:user,alumno,admin'
+            ]);
+
+            $user = new User();
+            $user->name = $request->input('name');
+            $user->surname = $request->input('surname');
+            $user->email = $request->input('email');
+            $user->password = Hash::make($request->input('password'));
+            $user->dni = $request->input('dni');
+            $user->rol = $request->input('rol');
+            $user->save();
+
+            return response()->json([
+                'message' => 'Usuario registrado exitosamente',
+                'user' => $user
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al registrar el usuario',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        // Create the user
-        $user = User::create([
-            'name' => $request->get('name'),
-            'surname' => $request->get('surname'),
-            'email' => $request->get('email'),
-            'password' => bcrypt($request->get('password')),
-            'dni' => $request->get('dni'),
-            'rol' => $request->get('rol'),
-        ]);
-        
-        // Return the user
-        return response()->json([
-            'message' => 'Usuario registrado exitosamente',
-            'data' => $user,
-        ], 201);
     }
+
 public function inicioSesion(Request $request)
 {
     $request->validate([
