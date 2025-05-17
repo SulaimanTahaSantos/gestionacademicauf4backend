@@ -18,6 +18,11 @@ use App\Models\Clase;
 function RetornarMensaje($mensaje){
     return response()->json(['mensaje' => $mensaje]);
 }
+
+Route::prefix('api')->middleware('api')->group(function(){
+    Route::post('/registro', [UserController::class, 'register']);
+    Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
+});
  // public routes 
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
