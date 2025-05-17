@@ -12,6 +12,17 @@ use Illuminate\Support\Facades\Route;
 //     ->middleware('guest')
 //     ->name('register');
 
+// <?php
+
+// use Illuminate\Support\Facades\Route;
+
+// Route::get('/', function () {
+//     return ['Laravel' => app()->version()];
+// });
+
+// require __DIR__.'/auth.php';
+
+
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
     ->name('login');
