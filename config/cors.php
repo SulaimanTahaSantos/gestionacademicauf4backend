@@ -15,11 +15,20 @@ return [
     |
     */
 
-   'paths' => ['api/*'],
+    'paths' => ['*'],
+
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:3000'],
-    'allowed_headers' => ['X-XSRF-TOKEN', 'Content-Type', 'X-Requested-With', 'Accept'],
+
+    'allowed_origins' => ['http://localhost:5173',"http://localhost:3000"],
+
+    'allowed_origins_patterns' => [],
+
+    'allowed_headers' => ['*'],
+
     'exposed_headers' => [],
+
     'max_age' => 0,
-    'supports_credentials' => true, // Esto debe ser true
+
+    'supports_credentials' => true,
+
 ];

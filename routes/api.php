@@ -6,7 +6,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\VerifyCsrfToken;
-use App\Http\Controllers\Api\CsrfTokenController;
 use App\Models\User;
 use App\Models\Grupo;
 use App\Models\Clase;
@@ -31,7 +30,8 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 //     return RetornarMensaje('Login successful');
 // });
 Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
-Route::get('/csrf-token', [CsrfTokenController::class, 'getToken']);
+
+
 // Protected Routes
 Route::middleware([IsUserAuth::class])->group(function(){
     Route::post('/logout', [UserController::class, 'logout']);
