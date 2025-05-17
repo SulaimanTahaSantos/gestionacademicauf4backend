@@ -15,12 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*'],
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    'allowed_origins' => ['http://localhost:3000'], // Tu frontend URL
-    'allowed_origins_patterns' => [],
-    'allowed_headers' => ['Content-Type', 'X-CSRF-TOKEN', 'X-Requested-With', 'Accept'],
+   'paths' => ['api/*'],
+    'allowed_methods' => ['*'],
+    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_headers' => ['X-XSRF-TOKEN', 'Content-Type', 'X-Requested-With', 'Accept'],
     'exposed_headers' => [],
     'max_age' => 0,
-    'supports_credentials' => false,
+    'supports_credentials' => true, // Esto debe ser true
 ];
