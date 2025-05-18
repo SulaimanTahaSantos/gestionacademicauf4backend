@@ -19,17 +19,13 @@ function RetornarMensaje($mensaje){
     return response()->json(['mensaje' => $mensaje]);
 }
 
-Route::prefix('api')->middleware('api')->group(function(){
-    Route::post('/registro', [UserController::class, 'register']);
-    Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
-});
  // public routes 
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
-Route::post('/registro', [UserController::class, 'register'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/registro', [UserController::class, 'register']);
 Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 // Route::get('/login', function () {
 //     return RetornarMensaje('Login successful');
