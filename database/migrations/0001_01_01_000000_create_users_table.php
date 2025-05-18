@@ -20,13 +20,13 @@ return new class extends Migration
             $table->string('password');
             $table->string('dni')->unique();
             $table->string('rol');
-            $table->rememberToken()->nullable();
+            $table->rememberToken();
             $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
-            $table->string('token')->nullable();
+            $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
