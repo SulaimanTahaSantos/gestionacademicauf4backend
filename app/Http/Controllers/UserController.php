@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Middleware\IsUserAuth;
+use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\VerifyCsrfToken;
+use App\Models\Grupo;
 
 class UserController extends Controller
 {
