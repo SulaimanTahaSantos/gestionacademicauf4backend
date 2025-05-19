@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('codigo');
             $table->string('descripcion')->nullable();
-            $table->foreignId('curso_id')->constrained()->onDelete('cascade'); 
+            $table->foreignId('cursar_id')->constrained('cursars')->onDelete('cascade'); 
             $table->timestamps();
         });
     }

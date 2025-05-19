@@ -32,7 +32,7 @@ return new class extends Migration
 
             $table->foreign('modulo_id')->references('id')->on('modulos')->onDelete('cascade');
             $table->foreign('profesor_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('grupo_id')->references('id')->on('grupos')->onDelete('cascade');
+            $table->foreign('grupo_id')->references('id')->on('grupo')->onDelete('cascade');
         });
     }
 
