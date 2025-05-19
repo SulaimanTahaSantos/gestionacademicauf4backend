@@ -174,4 +174,44 @@ public function fetchUsersAndGroupsAndClasses()
 
     return response()->json($users);
 }
+
+public function insertUsersAndGroupsAndClasses(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'surname' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'dni' => 'required|string|max:20|unique:users,dni',
+        'rol' => 'required|in:user,profesor,admin',
+        'grupo.nombre' => 'required|string|max:255',
+        'clase.nombre' => 'required|string|max:255',
+    ]);
+
+    $user = new User();
+    $user->name = $request->input('name');
+    $user->surname = $request->input('surname');
+    $user->email = $request->input('email');
+    $user->dni = $request->input('dni');
+    $user->rol = $request->input('rol');
+    $user->save();
+
+    $group = new Grupo();
+    $group->nombre = $request->input('grupo.nombre');
+    $group->user_id = $user->id;
+    $group->save();
+
+    $class = new Clase();
+    $class->nombre = $request->input('clase.nombre');
+    $class->user_id = $user->id;
+    $class->save();
+
+    return response()->json([
+        'message' => 'Usuario, grupo y clase creados correctamente',
+        'user' => $user,
+        'grupo' => $group,
+        'clase' => $class
+    ], 201);
+}
+
+
 }

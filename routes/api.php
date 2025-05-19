@@ -31,7 +31,7 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 //     return RetornarMensaje('Login successful');
 // });
 Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
-
+Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
 
 // Protected Routes
 Route::middleware([IsUserAuth::class])->group(function(){
