@@ -211,6 +211,53 @@ public function insertUsersAndGroupsAndClasses(Request $request)
     return response()->json($user, 201);
 }
 
+public function updateUserAndGroupsAndClasses(Request $request, $id)
+{
+    $user = User::find($id);
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
 
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'surname' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email,' . $id,
+        'dni' => 'required|string|max:20|unique:users,dni,' . $id,
+        'rol' => 'required|in:user,profesor,admin',
+        'grupo.nombre' => 'required|string|max:255',
+        'clase.nombre' => 'required|string|max:255',
+    ]);
+
+    $user->name = $request->input('name');
+    $user->surname = $request->input('surname');
+    $user->email = $request->input('email');
+    $user->password = Hash::make($request->input('password'));
+    $user->dni = $request->input('dni');
+    $user->rol = $request->input('rol');
+    $user->save();
+
+    // Actualizar grupo
+    if ($user->grupo) {
+        $user->grupo->nombre = $request->input('grupo.nombre');
+        $user->grupo->save();
+    } else {
+        $group = new Grupo();
+        $group->nombre = $request->input('grupo.nombre');
+        $group->user_id = $user->id;
+        $group->save();
+    }
+
+    if ($user->clase) {
+        $user->clase->nombre = $request->input('clase.nombre');
+        $user->clase->save();
+    } else {
+        $class = new Clase();
+        $class->nombre = $request->input('clase.nombre');
+        $class->user_id = $user->id;
+        $class->save();
+    }
+
+    return response()->json($user, 200);
+}
 
 }

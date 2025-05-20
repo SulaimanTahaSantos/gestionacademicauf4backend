@@ -31,6 +31,7 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 // });
 Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
 Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
+Route::put('/updateUsersAndGroupsAndClasses',[UserController::class, 'updateUsersAndGroupsAndClasses']);
 
 // Protected Routes
 Route::middleware([IsUserAuth::class])->group(function(){
