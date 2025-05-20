@@ -18,7 +18,7 @@ use App\Models\Clase;
 function RetornarMensaje($mensaje){
     return response()->json(['mensaje' => $mensaje]);
 }
-
+Route::get('/csrf-token', [CsrfController::class, 'getToken']);
  // public routes 
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
