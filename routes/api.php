@@ -9,6 +9,12 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\User;
 use App\Models\Grupo;
 use App\Models\Clase;
+use App\Http\Controllers\CsrfController;
+use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 
 // Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
