@@ -32,7 +32,7 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
 Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
 Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
-
+Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'deleteUserAndGroupsAndClasses']);
 // Protected Routes
 Route::middleware([IsUserAuth::class])->group(function(){
     Route::post('/logout', [UserController::class, 'logout']);

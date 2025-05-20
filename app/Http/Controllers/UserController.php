@@ -260,4 +260,23 @@ public function updateUserAndGroupsAndClasses(Request $request, $id)
     return response()->json($user, 200);
 }
 
+public function deleteUserAndGroupsAndClasses($id)
+{
+    $user = User::find($id);
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    if ($user->grupo) {
+        $user->grupo->delete();
+    }
+    if ($user->clase) {
+        $user->clase->delete();
+    }
+
+    $user->delete();
+
+    return response()->json(['message' => 'User and related data deleted successfully'], 200);
+
+}
 }
