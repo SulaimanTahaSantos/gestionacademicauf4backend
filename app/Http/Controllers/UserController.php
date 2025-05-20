@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\Grupo;
+use App\Models\Clase;
+
 
 class UserController extends Controller
 {
