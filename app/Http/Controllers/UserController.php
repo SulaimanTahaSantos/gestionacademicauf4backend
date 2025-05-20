@@ -99,13 +99,10 @@ class UserController extends Controller
             'dni' => $request->dni,
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return response()->json([
             'status' => true,
             'message' => 'User registered successfully',
             'data' => $user,
-            'token' => $token
         ], 201);
     }
 
