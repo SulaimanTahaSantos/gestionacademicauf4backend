@@ -5,16 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
-use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\User;
 use App\Models\Grupo;
 use App\Models\Clase;
-use App\Http\Controllers\CsrfController;
-use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 
 // Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
@@ -24,7 +17,7 @@ use Illuminate\Support\Facades\Validator;
 function RetornarMensaje($mensaje){
     return response()->json(['mensaje' => $mensaje]);
 }
-Route::get('/csrf-token', [CsrfController::class, 'getToken']);
+
  // public routes 
 Route::get('/users', [UserController::class, 'index']);
 Route::get('/users/{id}', [UserController::class, 'show']);
