@@ -193,6 +193,7 @@ public function insertUsersAndGroupsAndClasses(Request $request)
     $user->name = $request->input('name');
     $user->surname = $request->input('surname');
     $user->email = $request->input('email');
+    $user->password = Hash::make($request->input('password'));
     $user->dni = $request->input('dni');
     $user->rol = $request->input('rol');
     $user->save();
@@ -207,13 +208,12 @@ public function insertUsersAndGroupsAndClasses(Request $request)
     $class->user_id = $user->id;
     $class->save();
 
-    return response()->json([
-        'message' => 'Usuario, grupo y clase creados correctamente',
-        'user' => $user,
-        'grupo' => $group,
-        'clase' => $class
-    ], 201);
+    // Recargar relaciones
+    $user->load('grupo', 'clase');
+
+    return response()->json($user, 201);
 }
+
 
 
 }
