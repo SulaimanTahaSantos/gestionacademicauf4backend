@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-'allowed_origins' => ['http://localhost:3000', 'https://gestionacademicauf4backend-production.up.railway.app'],
+    'allowed_origins' => ['http://localhost:3000', 'https://gestionacademicauf4backend-production.up.railway.app'],
 
     'allowed_origins_patterns' => [],
 
@@ -30,6 +30,4 @@ return [
     'max_age' => 0,
     
    'supports_credentials' => true,
-
-
 ];
