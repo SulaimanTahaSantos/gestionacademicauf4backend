@@ -44,6 +44,7 @@ Route::put('/updateUserSettingsPassword',[UserController::class, 'updateUserSett
 // Vista grupos routes
 Route::get('/grupos', [GrupoController::class, 'getGrupos']);
 Route::post('/grupos', [GrupoController::class, 'insertGrupoCompleto']);
+Route::put('/grupos/{id}', [GrupoController::class, 'updateGrupoCompleto']);
 
 
 

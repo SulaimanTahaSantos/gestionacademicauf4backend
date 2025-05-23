@@ -7,17 +7,15 @@ use App\Models\Grupo;
 use App\Models\Cursar;
 use App\Models\Modulo;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
+
 
 
 
 
 class GrupoController extends Controller
 {
-    /**
-     * Get grupos with modules and users
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function getGrupos()
     {
         try {
@@ -73,12 +71,6 @@ class GrupoController extends Controller
         }
     }
     
-    /**
-     * Create a complete grupo with modules and users
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function insertGrupoCompleto(Request $request)
     {
         try {
@@ -171,6 +163,164 @@ class GrupoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear el grupo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateGrupoCompleto(Request $request, $id)
+    {
+        try {
+            // Buscar el grupo
+            $grupo = Grupo::find($id);
+
+            // Validar los datos de entrada
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'user_id' => 'required|exists:users,id',
+                'modulos' => 'required|array|min:1',
+                'modulos.*.id' => 'nullable|exists:modulos,id',
+                'modulos.*.nombre' => 'required|string|max:255',
+                'modulos.*.codigo' => 'required|string|max:100',
+                'modulos.*.descripcion' => 'nullable|string',
+                'modulos.*.usuario' => 'nullable|array',
+                'modulos.*.usuario.id' => 'nullable|exists:users,id'
+            ]);
+
+            // Actualizar el grupo
+            $grupo->update([
+                'nombre' => $validated['nombre'],
+                'user_id' => $validated['user_id']
+            ]);
+
+            // Obtener módulos existentes del grupo
+            $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
+            $cursarIds = $cursarsDelGrupo->pluck('id');
+            $modulosExistentes = Modulo::whereIn('cursar_id', $cursarIds)->get();
+            $modulosExistentesIds = $modulosExistentes->pluck('id');
+
+            $modulosActualizados = [];
+            $modulosEnviados = collect($validated['modulos']);
+            $modulosEnviadosIds = $modulosEnviados->pluck('id')->filter();
+
+            // Eliminar módulos que no están en la nueva lista
+            $modulosAEliminar = $modulosExistentes->whereNotIn('id', $modulosEnviadosIds);
+            foreach ($modulosAEliminar as $modulo) {
+                if ($modulo->cursar_id) {
+                    Cursar::find($modulo->cursar_id)?->delete();
+                }
+                $modulo->delete();
+            }
+
+            // Procesar cada módulo
+            foreach ($validated['modulos'] as $moduloData) {
+                $cursar = null;
+                $modulo = null;
+
+                // Si hay un usuario asociado, buscar o crear la relación Cursar
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $usuario = User::find($moduloData['usuario']['id']);
+                    
+                    // Verificar que el usuario tenga rol 'user'
+                    if ($usuario && $usuario->rol === 'user') {
+                        // Si es un módulo existente, buscar el cursar existente
+                        if (isset($moduloData['id'])) {
+                            $moduloExistente = Modulo::find($moduloData['id']);
+                            if ($moduloExistente && $moduloExistente->cursar_id) {
+                                $cursar = Cursar::find($moduloExistente->cursar_id);
+                                if ($cursar) {
+                                    $cursar->update([
+                                        'user_id' => $usuario->id,
+                                        'grupo_id' => $grupo->id,
+                                        'fecha_inicio' => $cursar->fecha_inicio, // Mantener fecha original
+                                        'fecha_fin' => null
+                                    ]);
+                                }
+                            }
+                        }
+                        
+                        // Si no existe cursar, crear uno nuevo
+                        if (!$cursar) {
+                            $cursar = Cursar::create([
+                                'user_id' => $usuario->id,
+                                'grupo_id' => $grupo->id,
+                                'fecha_inicio' => now(),
+                                'fecha_fin' => null
+                            ]);
+                        }
+                    }
+                }
+
+                // Actualizar o crear el módulo
+                if (isset($moduloData['id'])) {
+                    // Actualizar módulo existente
+                    $modulo = Modulo::find($moduloData['id']);
+                    if ($modulo) {
+                        $modulo->update([
+                            'nombre' => $moduloData['nombre'],
+                            'codigo' => $moduloData['codigo'],
+                            'descripcion' => $moduloData['descripcion'] ?? null,
+                            'cursar_id' => $cursar ? $cursar->id : null
+                        ]);
+                    }
+                } else {
+                    // Crear nuevo módulo
+                    $modulo = Modulo::create([
+                        'nombre' => $moduloData['nombre'],
+                        'codigo' => $moduloData['codigo'],
+                        'descripcion' => $moduloData['descripcion'] ?? null,
+                        'cursar_id' => $cursar ? $cursar->id : null
+                    ]);
+                }
+
+                // Preparar datos del usuario para la respuesta
+                $usuarioData = null;
+                if ($cursar && $cursar->usuario) {
+                    $usuarioData = [
+                        'id' => $cursar->usuario->id,
+                        'nombre' => $cursar->usuario->name,
+                        'apellido' => $cursar->usuario->surname,
+                        'email' => $cursar->usuario->email,
+                        'dni' => $cursar->usuario->dni
+                    ];
+                }
+
+                $modulosActualizados[] = [
+                    'id' => $modulo->id,
+                    'nombre' => $modulo->nombre,
+                    'codigo' => $modulo->codigo,
+                    'descripcion' => $modulo->descripcion,
+                    'usuario' => $usuarioData
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Grupo actualizado exitosamente',
+                'data' => [
+                    'id' => $grupo->id,
+                    'nombre' => $grupo->nombre,
+                    'modulos' => $modulosActualizados
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grupo no encontrado'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el grupo',
                 'error' => $e->getMessage()
             ], 500);
         }
