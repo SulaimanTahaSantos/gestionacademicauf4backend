@@ -33,6 +33,11 @@ Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsers
 Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
 Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
 Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'deleteUserAndGroupsAndClasses']);
+// vista configuracion routes
+
+Route::put('/updateUserSettings/{id}',[UserController::class, 'updateUserSettings']);
+
+
 // Protected Routes
 Route::middleware([IsUserAuth::class])->group(function(){
     Route::post('/logout', [UserController::class, 'logout']);

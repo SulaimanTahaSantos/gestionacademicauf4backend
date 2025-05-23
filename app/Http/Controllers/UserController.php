@@ -279,4 +279,19 @@ public function deleteUserAndGroupsAndClasses($id)
     return response()->json(['message' => 'User and related data deleted successfully'], 200);
 
 }
+
+// metodo para hacer un put en configuracion del usuario cuando quiera cambiar de email, name, surname, y url
+
+public function updateUserSettings(Request $request)
+{
+    $user = Auth::user();
+    $user->name = $request->input('name');
+    $user->surname = $request->input('surname');
+    $user->email = $request->input('email');
+    $user->url = $request->input('url');
+    $user->save();
+
+    return response()->json(['message' => 'User settings updated successfully'], 200);
+}
+
 }
