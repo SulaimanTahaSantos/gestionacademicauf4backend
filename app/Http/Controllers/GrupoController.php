@@ -24,16 +24,12 @@ class GrupoController extends Controller
             $grupos = Grupo::all();
             
             $resultado = $grupos->map(function($grupo) {
-                // Obtener cursars de este grupo
                 $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
                 
-                // Obtener módulos que pertenecen a este grupo
                 $cursarIds = $cursarsDelGrupo->pluck('id');
                 $modulos = Modulo::whereIn('cursar_id', $cursarIds)->get();
                 
-                // Para cada módulo, obtener los usuarios (alumnos)
                 $modulosConUsuarios = $modulos->map(function($modulo) {
-                    // Obtener el cursar asociado al módulo
                     $cursar = Cursar::find($modulo->cursar_id);
                     $usuario = null;
                     
@@ -72,6 +68,109 @@ class GrupoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener los grupos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Create a complete grupo with modules and users
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function insertGrupoCompleto(Request $request)
+    {
+        try {
+            // Validar los datos de entrada
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'user_id' => 'required|exists:users,id',
+                'modulos' => 'required|array|min:1',
+                'modulos.*.nombre' => 'required|string|max:255',
+                'modulos.*.codigo' => 'required|string|max:100',
+                'modulos.*.descripcion' => 'nullable|string',
+                'modulos.*.usuario' => 'nullable|array',
+                'modulos.*.usuario.id' => 'nullable|exists:users,id'
+            ]);
+
+            // Crear el grupo
+            $grupo = Grupo::create([
+                'nombre' => $validated['nombre'],
+                'user_id' => $validated['user_id']
+            ]);
+
+            $modulosCreados = [];
+
+            // Crear módulos y asociaciones
+            foreach ($validated['modulos'] as $moduloData) {
+                $cursar = null;
+                
+                // Si hay un usuario asociado, crear la relación Cursar
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $usuario = User::find($moduloData['usuario']['id']);
+                    
+                    // Verificar que el usuario tenga rol 'user'
+                    if ($usuario && $usuario->rol === 'user') {
+                        $cursar = Cursar::create([
+                            'user_id' => $usuario->id,
+                            'grupo_id' => $grupo->id,
+                            'fecha_inicio' => now(),
+                            'fecha_fin' => null
+                        ]);
+                    }
+                }
+
+                // Crear el módulo
+                $modulo = Modulo::create([
+                    'nombre' => $moduloData['nombre'],
+                    'codigo' => $moduloData['codigo'],
+                    'descripcion' => $moduloData['descripcion'] ?? null,
+                    'cursar_id' => $cursar ? $cursar->id : null
+                ]);
+
+                // Preparar datos del usuario para la respuesta
+                $usuarioData = null;
+                if ($cursar && $cursar->usuario) {
+                    $usuarioData = [
+                        'id' => $cursar->usuario->id,
+                        'nombre' => $cursar->usuario->name,
+                        'apellido' => $cursar->usuario->surname,
+                        'email' => $cursar->usuario->email,
+                        'dni' => $cursar->usuario->dni
+                    ];
+                }
+
+                $modulosCreados[] = [
+                    'id' => $modulo->id,
+                    'nombre' => $modulo->nombre,
+                    'codigo' => $modulo->codigo,
+                    'descripcion' => $modulo->descripcion,
+                    'usuario' => $usuarioData
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Grupo creado exitosamente',
+                'data' => [
+                    'id' => $grupo->id,
+                    'nombre' => $grupo->nombre,
+                    'modulos' => $modulosCreados
+                ]
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el grupo',
                 'error' => $e->getMessage()
             ], 500);
         }
