@@ -23,8 +23,7 @@ class ModuloController extends Controller
                 'users.name as profesor_name',
                 'users.surname as profesor_surname'
             )
-            ->join('impartido_modulos', 'modulos.id', '=', 'impartido_modulos.modulo_id')
-            ->join('grupo', 'impartido_modulos.grupo_id', '=', 'grupo.id')
+            ->join('grupo', 'modulos.grupo_id', '=', 'grupo.id')
             ->join('users', 'grupo.user_id', '=', 'users.id')
             ->where('users.rol', 'profesor')
             ->get();

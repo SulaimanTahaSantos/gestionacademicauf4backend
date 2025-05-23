@@ -9,11 +9,16 @@ class Modulo extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['nombre', 'codigo', 'descripcion', 'cursar_id'];
+    protected $fillable = ['nombre', 'codigo', 'descripcion', 'cursar_id', 'grupo_id'];
     
     public function curso()
     {
         return $this->belongsTo(Curso::class);
+    }
+
+    public function grupo()
+    {
+        return $this->belongsTo(Grupo::class);
     }
 
     public function grupos()
