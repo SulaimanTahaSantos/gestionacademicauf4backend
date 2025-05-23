@@ -325,4 +325,54 @@ class GrupoController extends Controller
             ], 500);
         }
     }
+
+    public function deleteGrupoCompleto($id)
+    {
+        try {
+            // Buscar el grupo
+            $grupo = Grupo::find($id);
+
+            // Obtener todos los cursars del grupo
+            $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
+            
+            // Obtener todos los módulos relacionados con estos cursars
+            $cursarIds = $cursarsDelGrupo->pluck('id');
+            $modulos = Modulo::whereIn('cursar_id', $cursarIds)->get();
+
+            // También obtener módulos que podrían estar sin cursar_id pero del grupo
+            $modulosSinCursar = Modulo::whereNull('cursar_id')->get();
+
+            // Eliminar módulos
+            foreach ($modulos as $modulo) {
+                $modulo->delete();
+            }
+
+            // Eliminar relaciones cursar
+            foreach ($cursarsDelGrupo as $cursar) {
+                $cursar->delete();
+            }
+
+            // Finalmente eliminar el grupo
+            $grupoNombre = $grupo->nombre;
+            $grupo->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Grupo '{$grupoNombre}' eliminado exitosamente junto con todos sus módulos y relaciones"
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grupo no encontrado'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el grupo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
