@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('dni')->unique();
             $table->string('rol');
-            $table->string('url')->nullable();
+            $table->text('url')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
