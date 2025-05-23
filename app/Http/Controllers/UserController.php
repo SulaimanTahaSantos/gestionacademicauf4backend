@@ -297,4 +297,14 @@ public function updateUserSettings(Request $request)
     return response()->json(['message' => 'User settings updated successfully'], 200);
 }
 
+
+public function updateUserSettingsPassword(Request $request)
+{
+    $user = Auth::user();
+    $user->password = Hash::make($request->input('password'));
+    $user->save();
+
+    return response()->json(['message' => 'User password updated successfully'], 200);
+
+}
 }

@@ -36,6 +36,7 @@ Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'del
 // vista configuracion routes
 
 Route::put('/updateUserSettings',[UserController::class, 'updateUserSettings']);
+Route::put('/updateUserSettingsPassword',[UserController::class, 'updateUserSettingsPassword']);
 
 
 // Protected Routes
