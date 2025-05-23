@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GrupoController;
+use App\Http\Controllers\ModuloController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
@@ -46,6 +47,9 @@ Route::get('/grupos', [GrupoController::class, 'getGrupos']);
 Route::post('/grupos', [GrupoController::class, 'insertGrupoCompleto']);
 Route::put('/grupos/{id}', [GrupoController::class, 'updateGrupoCompleto']);
 Route::delete('/grupos/{id}', [GrupoController::class, 'deleteGrupoCompleto']);
+
+// Vista módulos routes
+Route::get('/modulos', [ModuloController::class, 'getModulos']);
 
 
 

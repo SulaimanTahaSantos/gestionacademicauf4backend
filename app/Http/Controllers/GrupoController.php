@@ -74,7 +74,6 @@ class GrupoController extends Controller
     public function insertGrupoCompleto(Request $request)
     {
         try {
-            // Validar los datos de entrada
             $validated = $request->validate([
                 'nombre' => 'required|string|max:255',
                 'user_id' => 'required|exists:users,id',
@@ -86,7 +85,6 @@ class GrupoController extends Controller
                 'modulos.*.usuario.id' => 'nullable|exists:users,id'
             ]);
 
-            // Crear el grupo
             $grupo = Grupo::create([
                 'nombre' => $validated['nombre'],
                 'user_id' => $validated['user_id']
@@ -94,15 +92,12 @@ class GrupoController extends Controller
 
             $modulosCreados = [];
 
-            // Crear módulos y asociaciones
             foreach ($validated['modulos'] as $moduloData) {
                 $cursar = null;
                 
-                // Si hay un usuario asociado, crear la relación Cursar
                 if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
                     $usuario = User::find($moduloData['usuario']['id']);
                     
-                    // Verificar que el usuario tenga rol 'user'
                     if ($usuario && $usuario->rol === 'user') {
                         $cursar = Cursar::create([
                             'user_id' => $usuario->id,
@@ -113,7 +108,7 @@ class GrupoController extends Controller
                     }
                 }
 
-                // Crear el módulo
+               
                 $modulo = Modulo::create([
                     'nombre' => $moduloData['nombre'],
                     'codigo' => $moduloData['codigo'],
@@ -121,7 +116,6 @@ class GrupoController extends Controller
                     'cursar_id' => $cursar ? $cursar->id : null
                 ]);
 
-                // Preparar datos del usuario para la respuesta
                 $usuarioData = null;
                 if ($cursar && $cursar->usuario) {
                     $usuarioData = [
@@ -212,18 +206,15 @@ class GrupoController extends Controller
                 $modulo->delete();
             }
 
-            // Procesar cada módulo
             foreach ($validated['modulos'] as $moduloData) {
                 $cursar = null;
                 $modulo = null;
 
-                // Si hay un usuario asociado, buscar o crear la relación Cursar
                 if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
                     $usuario = User::find($moduloData['usuario']['id']);
                     
-                    // Verificar que el usuario tenga rol 'user'
                     if ($usuario && $usuario->rol === 'user') {
-                        // Si es un módulo existente, buscar el cursar existente
+                        
                         if (isset($moduloData['id'])) {
                             $moduloExistente = Modulo::find($moduloData['id']);
                             if ($moduloExistente && $moduloExistente->cursar_id) {
@@ -232,14 +223,13 @@ class GrupoController extends Controller
                                     $cursar->update([
                                         'user_id' => $usuario->id,
                                         'grupo_id' => $grupo->id,
-                                        'fecha_inicio' => $cursar->fecha_inicio, // Mantener fecha original
+                                        'fecha_inicio' => $cursar->fecha_inicio, 
                                         'fecha_fin' => null
                                     ]);
                                 }
                             }
                         }
                         
-                        // Si no existe cursar, crear uno nuevo
                         if (!$cursar) {
                             $cursar = Cursar::create([
                                 'user_id' => $usuario->id,
@@ -251,9 +241,7 @@ class GrupoController extends Controller
                     }
                 }
 
-                // Actualizar o crear el módulo
                 if (isset($moduloData['id'])) {
-                    // Actualizar módulo existente
                     $modulo = Modulo::find($moduloData['id']);
                     if ($modulo) {
                         $modulo->update([
@@ -264,7 +252,6 @@ class GrupoController extends Controller
                         ]);
                     }
                 } else {
-                    // Crear nuevo módulo
                     $modulo = Modulo::create([
                         'nombre' => $moduloData['nombre'],
                         'codigo' => $moduloData['codigo'],
@@ -273,7 +260,6 @@ class GrupoController extends Controller
                     ]);
                 }
 
-                // Preparar datos del usuario para la respuesta
                 $usuarioData = null;
                 if ($cursar && $cursar->usuario) {
                     $usuarioData = [
@@ -332,27 +318,21 @@ class GrupoController extends Controller
             // Buscar el grupo
             $grupo = Grupo::find($id);
 
-            // Obtener todos los cursars del grupo
             $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
             
-            // Obtener todos los módulos relacionados con estos cursars
             $cursarIds = $cursarsDelGrupo->pluck('id');
             $modulos = Modulo::whereIn('cursar_id', $cursarIds)->get();
 
-            // También obtener módulos que podrían estar sin cursar_id pero del grupo
             $modulosSinCursar = Modulo::whereNull('cursar_id')->get();
 
-            // Eliminar módulos
             foreach ($modulos as $modulo) {
                 $modulo->delete();
             }
 
-            // Eliminar relaciones cursar
             foreach ($cursarsDelGrupo as $cursar) {
                 $cursar->delete();
             }
 
-            // Finalmente eliminar el grupo
             $grupoNombre = $grupo->nombre;
             $grupo->delete();
 
