@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Modulo extends Model
 {
     use HasFactory;
-    protected $fillable = ['nombre', 'codigo', 'descripcion', 'curso_id'];
+    
+    protected $fillable = ['nombre', 'codigo', 'descripcion', 'cursar_id'];
+    
     public function curso()
     {
         return $this->belongsTo(Curso::class);
@@ -22,5 +24,15 @@ class Modulo extends Model
     public function practicas()
     {
         return $this->hasMany(Practica::class);
+    }
+    
+    public function cursars()
+    {
+        return $this->belongsTo(Cursar::class, 'cursar_id');
+    }
+    
+    public function cursar()
+    {
+        return $this->belongsTo(Cursar::class, 'cursar_id');
     }
 }

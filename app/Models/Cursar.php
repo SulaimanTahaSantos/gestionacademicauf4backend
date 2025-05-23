@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Cursar extends Model
 {
     use HasFactory;
-    protected $table = [
+    
+    protected $table = 'cursars';
+    
+    protected $fillable = [
         'user_id',
         'grupo_id',
         'fecha_inicio',

@@ -3,11 +3,14 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GrupoController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
 use App\Models\Grupo;
 use App\Models\Clase;
+use App\Models\Modulo;
+use App\Models\Cursar;
 
 
 // Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
@@ -37,6 +40,10 @@ Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'del
 
 Route::put('/updateUserSettings',[UserController::class, 'updateUserSettings']);
 Route::put('/updateUserSettingsPassword',[UserController::class, 'updateUserSettingsPassword']);
+
+// Vista grupos routes
+Route::get('/grupos', [GrupoController::class, 'getGrupos']);
+
 
 
 // Protected Routes
