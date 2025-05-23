@@ -97,6 +97,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'rol' => $request->rol,
             'dni' => $request->dni,
+            'url' => $request->url,
         ]);
 
         return response()->json([
