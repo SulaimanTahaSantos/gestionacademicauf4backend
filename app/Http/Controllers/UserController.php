@@ -78,6 +78,8 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'rol' => 'required|string|max:255',
             'dni' => 'required|string|max:255',
+            'url' => 'nullable|string',
+
             
 
         ]);
