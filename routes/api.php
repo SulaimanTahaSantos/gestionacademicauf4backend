@@ -71,6 +71,7 @@ Route::delete('/entregas/{id}', [EntregaController::class, 'destroy']);
 // Vista Rubricas routes
 Route::get('/rubricas', [RubricaController::class, 'index']);
 Route::post('/rubricas', [RubricaController::class, 'store']);
+Route::put('/rubricas/{id}', [RubricaController::class, 'update']);
 
 
 
