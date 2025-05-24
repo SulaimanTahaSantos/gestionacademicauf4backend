@@ -23,12 +23,15 @@ class Grupo extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-        return $this->belongsToMany(User::class, 'cursar')->withTimestamps();
-
     }
 
     public function cursars()
-{
-    return $this->hasMany(Cursar::class);
-}
+    {
+        return $this->hasMany(Cursar::class);
+    }
+
+    public function modulos()
+    {
+        return $this->hasMany(Modulo::class);
+    }
 }

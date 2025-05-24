@@ -50,6 +50,7 @@ Route::delete('/grupos/{id}', [GrupoController::class, 'deleteGrupoCompleto']);
 
 // Vista módulos routes
 Route::get('/modulos', [ModuloController::class, 'getModulos']);
+Route::post('/modulos', [ModuloController::class, 'store']);
 
 
 
