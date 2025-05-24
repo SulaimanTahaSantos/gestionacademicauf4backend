@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Rubrica;
 use App\Models\Practica;
 use App\Models\User;
+use App\Models\Nota;
+
+
 use Illuminate\Support\Facades\Validator;
 
 class RubricaController extends Controller
@@ -378,6 +381,109 @@ class RubricaController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar la rúbrica',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+  
+    public function destroy($id)
+    {
+        try {
+            $rubrica = Rubrica::find($id);
+            if (!$rubrica) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rúbrica no encontrada'
+                ], 404);
+            }
+
+            $rubrica->load([
+                'practica' => function($query) {
+                    $query->select('id', 'identificador', 'titulo', 'descripcion', 'nombre_practica', 'profesor_id', 'fecha_entrega', 'enlace_practica');
+                },
+                'practica.profesor' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'evaluador' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'criterios' => function($query) {
+                    $query->select('id', 'rubrica_id', 'nombre', 'puntuacion_maxima', 'descripcion');
+                }
+            ]);
+
+            $deletedData = [
+                'rubrica' => [
+                    'id' => $rubrica->id,
+                    'nombre' => $rubrica->nombre,
+                    'documento' => $rubrica->documento,
+                    'created_at' => $rubrica->created_at,
+                    'updated_at' => $rubrica->updated_at
+                ],
+                'practica_asignada' => $rubrica->practica ? [
+                    'id' => $rubrica->practica->id,
+                    'identificador' => $rubrica->practica->identificador,
+                    'titulo' => $rubrica->practica->titulo,
+                    'descripcion' => $rubrica->practica->descripcion,
+                    'nombre_practica' => $rubrica->practica->nombre_practica,
+                    'fecha_entrega' => $rubrica->practica->fecha_entrega,
+                    'enlace_practica' => $rubrica->practica->enlace_practica,
+                    'profesor_id' => $rubrica->practica->profesor_id
+                ] : null,
+                'profesor_practica' => $rubrica->practica && $rubrica->practica->profesor ? [
+                    'id' => $rubrica->practica->profesor->id,
+                    'nombre' => $rubrica->practica->profesor->name,
+                    'apellido' => $rubrica->practica->profesor->surname,
+                    'email' => $rubrica->practica->profesor->email,
+                    'rol' => $rubrica->practica->profesor->rol
+                ] : null,
+                'evaluador_asignado' => $rubrica->evaluador ? [
+                    'id' => $rubrica->evaluador->id,
+                    'nombre' => $rubrica->evaluador->name,
+                    'apellido' => $rubrica->evaluador->surname,
+                    'email' => $rubrica->evaluador->email,
+                    'rol' => $rubrica->evaluador->rol
+                ] : null,
+                'criterios_eliminados' => $rubrica->criterios->map(function ($criterio) {
+                    return [
+                        'id' => $criterio->id,
+                        'nombre' => $criterio->nombre,
+                        'puntuacion_maxima' => $criterio->puntuacion_maxima,
+                        'descripcion' => $criterio->descripcion
+                    ];
+                }),
+                'total_criterios_eliminados' => $rubrica->criterios->count()
+            ];
+
+            $notasAsociadas = Nota::where('rubrica_id', $rubrica->id)->count();
+            
+            if ($notasAsociadas > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar la rúbrica porque está siendo utilizada en ' . $notasAsociadas . ' nota(s)',
+                    'data' => [
+                        'rubrica_id' => $rubrica->id,
+                        'rubrica_nombre' => $rubrica->nombre,
+                        'notas_asociadas' => $notasAsociadas
+                    ]
+                ], 409); 
+            }
+
+            $rubrica->criterios()->delete();
+            
+            $rubrica->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rúbrica eliminada exitosamente',
+                'data' => $deletedData
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la rúbrica',
                 'error' => $e->getMessage()
             ], 500);
         }
