@@ -64,6 +64,7 @@ Route::delete('/notas/{id}', [NotaController::class, 'destroy']);
 // Vista Entregas routes
 Route::get('/entregas', [EntregaController::class, 'getEntregas']);
 Route::post('/entregas', [EntregaController::class, 'store']);
+Route::put('/entregas/{id}', [EntregaController::class, 'update']);
 
 
 

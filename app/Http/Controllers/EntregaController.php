@@ -153,5 +153,115 @@ class EntregaController extends Controller
             ], 500);
         }
     }
+    
+    public function update(Request $request, $id)
+    {
+        try {
+            // Verificar que la entrega existe
+            $entrega = Entrega::find($id);
+            
+            if (!$entrega) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Entrega no encontrada'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'practica_id' => 'nullable|exists:practicas,id',
+                'user_id' => 'nullable|exists:users,id',
+                'fecha_entrega' => 'nullable|date',
+                'archivo' => 'nullable|string|max:255'
+            ]);
+
+            if (isset($validated['user_id'])) {
+                $alumno = User::where('id', $validated['user_id'])
+                              ->where('rol', 'user')
+                              ->first();
+
+                if (!$alumno) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El usuario seleccionado debe ser un alumno (rol: user)'
+                    ], 422);
+                }
+            }
+
+            if (isset($validated['practica_id'])) {
+                $practica = Practica::find($validated['practica_id']);
+                if (!$practica) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'La práctica especificada no existe'
+                    ], 422);
+                }
+            }
+
+            $entrega->update($validated);
+
+            $entregaCompleta = Entrega::select(
+                'entregas.id as entrega_id',
+                'entregas.practica_id as entrega_practica_id',
+                'entregas.user_id as entrega_user_id',
+                'entregas.fecha_entrega as fecha_entrega',
+                'entregas.archivo as archivo',
+                
+                'alumnos.name as alumno_name',
+                'alumnos.surname as alumno_surname',
+                'alumnos.email as alumno_email',
+                'alumnos.dni as alumno_dni',
+                
+                'practicas.identificador as practica_identificador',
+                'practicas.titulo as practica_titulo',
+                'practicas.nombre_practica as practica_nombre',
+                'practicas.fecha_entrega as practica_fecha_entrega',
+                
+                'profesores.name as profesor_name',
+                'profesores.surname as profesor_surname',
+                
+                'rubricas.nombre as rubrica_nombre',
+                'rubricas.documento as rubrica_documento',
+                
+                'notas.nota_final as nota_final',
+                'notas.comentario as nota_comentario',
+                
+                'evaluadores.name as evaluador_name',
+                'evaluadores.surname as evaluador_surname'
+            )
+            ->leftJoin('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
+            ->leftJoin('practicas', 'entregas.practica_id', '=', 'practicas.id')
+            ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
+            ->leftJoin('rubricas', 'practicas.id', '=', 'rubricas.practica_id')
+            ->leftJoin('notas', 'entregas.id', '=', 'notas.entrega_id')
+            ->leftJoin('users as evaluadores', 'notas.user_id', '=', 'evaluadores.id')
+            ->where('entregas.id', $entrega->id)
+            ->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => $entregaCompleta,
+                'message' => 'Entrega actualizada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega no encontrada'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la entrega: ' . $e->getMessage()
+            ], 500);
+        }
+    }
    
 }
