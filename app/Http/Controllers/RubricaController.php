@@ -459,15 +459,10 @@ class RubricaController extends Controller
             $notasAsociadas = Nota::where('rubrica_id', $rubrica->id)->count();
             
             if ($notasAsociadas > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se puede eliminar la rúbrica porque está siendo utilizada en ' . $notasAsociadas . ' nota(s)',
-                    'data' => [
-                        'rubrica_id' => $rubrica->id,
-                        'rubrica_nombre' => $rubrica->nombre,
-                        'notas_asociadas' => $notasAsociadas
-                    ]
-                ], 409); 
+                Nota::where('rubrica_id', $rubrica->id)->delete();
+                $deletedData['notas_eliminadas'] = $notasAsociadas;
+            } else {
+                $deletedData['notas_eliminadas'] = 0;
             }
 
             $rubrica->criterios()->delete();
