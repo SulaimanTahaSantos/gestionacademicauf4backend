@@ -22,7 +22,7 @@ class NotaController extends Controller
             ->join('entregas', 'notas.entrega_id', '=', 'entregas.id')
             ->join('users', 'entregas.user_id', '=', 'users.id')  
             ->leftJoin('rubricas', 'notas.rubrica_id', '=', 'rubricas.id')  
-            ->where('users.rol', 'alumno')  
+            ->where('users.rol', 'user')  
             ->get();
 
             return response()->json([
