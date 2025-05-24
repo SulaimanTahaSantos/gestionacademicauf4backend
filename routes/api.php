@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GrupoController;
 use App\Http\Controllers\ModuloController;
+use App\Http\Controllers\NotaController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
@@ -55,7 +56,7 @@ Route::put('/modulos/{id}', [ModuloController::class, 'update']);
 Route::delete('/modulos/{id}', [ModuloController::class, 'destroy']);
 // Vista Notas routes
 
-Route::get('/getNotas', [UserController::class, 'getNotas']);
+Route::get('/getNotas', [NotaController::class, 'getNotas']);
 
 
 
