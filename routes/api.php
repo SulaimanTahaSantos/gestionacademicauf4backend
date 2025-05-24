@@ -52,6 +52,7 @@ Route::delete('/grupos/{id}', [GrupoController::class, 'deleteGrupoCompleto']);
 Route::get('/modulos', [ModuloController::class, 'getModulos']);
 Route::post('/modulos', [ModuloController::class, 'store']);
 Route::put('/modulos/{id}', [ModuloController::class, 'update']);
+Route::delete('/modulos/{id}', [ModuloController::class, 'destroy']);
 
 
 

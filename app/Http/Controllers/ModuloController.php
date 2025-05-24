@@ -178,4 +178,39 @@ class ModuloController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $modulo = Modulo::find($id);
+            
+            if (!$modulo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Módulo no encontrado'
+                ], 404);
+            }
+
+            $moduloData = [
+                'modulo_id' => $modulo->id,
+                'modulo_codigo' => $modulo->codigo,
+                'modulo_nombre' => $modulo->nombre,
+                'modulo_descripcion' => $modulo->descripcion
+            ];
+
+            $modulo->delete();
+
+            return response()->json([
+                'success' => true,
+                'data' => $moduloData,
+                'message' => 'Módulo eliminado correctamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el módulo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
