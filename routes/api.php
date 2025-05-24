@@ -7,6 +7,7 @@ use App\Http\Controllers\GrupoController;
 use App\Http\Controllers\ModuloController;
 use App\Http\Controllers\NotaController;
 use App\Http\Controllers\EntregaController;
+use App\Http\Controllers\RubricaController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
@@ -66,6 +67,9 @@ Route::get('/entregas', [EntregaController::class, 'getEntregas']);
 Route::post('/entregas', [EntregaController::class, 'store']);
 Route::put('/entregas/{id}', [EntregaController::class, 'update']);
 Route::delete('/entregas/{id}', [EntregaController::class, 'destroy']);
+
+// Vista Rubricas routes
+Route::get('/rubricas', [RubricaController::class, 'index']);
 
 
 
