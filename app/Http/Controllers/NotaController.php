@@ -184,4 +184,38 @@ class NotaController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $nota = Nota::find($id);
+            
+            if (!$nota) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nota no encontrada'
+                ], 404);
+            }
+
+            $notaData = [
+                'notas_id' => $nota->id,
+                'nota_final' => $nota->nota_final,
+                'comentario' => $nota->comentario
+            ];
+
+            $nota->delete();
+
+            return response()->json([
+                'success' => true,
+                'data' => $notaData,
+                'message' => 'Nota eliminada correctamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la nota: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
