@@ -3,93 +3,81 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Rubrica;
 
 class RubricaController extends Controller
 {
     /**
-     * Get all rubricas with related data
+     * Get all rubricas with related data using Eloquent
      * Shows: rubrica name, assigned practica, document, evaluator (profesor), and criteria
      */
     public function index()
     {
         try {
-            $rubricas = DB::table('rubricas')
-                ->leftJoin('practicas', 'rubricas.practica_id', '=', 'practicas.id')
-                ->leftJoin('users as evaluadores', 'rubricas.evaluador_id', '=', 'evaluadores.id')
-                ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
-                ->select(
-                    'rubricas.id as rubrica_id',
-                    'rubricas.nombre as rubrica_nombre',
-                    'rubricas.documento as rubrica_documento',
-                    'rubricas.practica_id',
-                    'rubricas.evaluador_id',
-                    'rubricas.created_at as rubrica_creada',
-                    'rubricas.updated_at as rubrica_actualizada',
-                    
-                    // Practica data
-                    'practicas.nombre as practica_nombre',
-                    'practicas.descripcion as practica_descripcion',
-                    'practicas.fecha_inicio as practica_fecha_inicio',
-                    'practicas.fecha_fin as practica_fecha_fin',
-                    'practicas.profesor_id',
-                    
-                    // Profesor data (owner of practica)
-                    'profesores.name as profesor_nombre',
-                    'profesores.email as profesor_email',
-                    'profesores.role as profesor_role',
-                    
-                    // Evaluador data (assigned to rubrica)
-                    'evaluadores.name as evaluador_nombre',
-                    'evaluadores.email as evaluador_email',
-                    'evaluadores.role as evaluador_role'
-                )
-                ->get();
+            $rubricas = Rubrica::with([
+                'practica' => function($query) {
+                    $query->select('id', 'identificador', 'titulo', 'descripcion', 'nombre_practica', 'profesor_id', 'fecha_entrega', 'enlace_practica');
+                },
+                'practica.profesor' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'evaluador' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'criterios' => function($query) {
+                    $query->select('id', 'rubrica_id', 'nombre', 'puntuacion_maxima', 'descripcion');
+                }
+            ])->get();
 
-            // Get criteria for each rubrica
-            $rubricasWithCriteria = $rubricas->map(function ($rubrica) {
-                $criterios = DB::table('criterios_rubrica')
-                    ->where('rubrica_id', $rubrica->rubrica_id)
-                    ->select('id', 'nombre', 'puntuacion_maxima', 'descripcion')
-                    ->get();
-
+            $rubricasData = $rubricas->map(function ($rubrica) {
                 return [
                     'rubrica' => [
-                        'id' => $rubrica->rubrica_id,
-                        'nombre' => $rubrica->rubrica_nombre,
-                        'documento' => $rubrica->rubrica_documento,
-                        'created_at' => $rubrica->rubrica_creada,
-                        'updated_at' => $rubrica->rubrica_actualizada
+                        'id' => $rubrica->id,
+                        'nombre' => $rubrica->nombre,
+                        'documento' => $rubrica->documento,
+                        'created_at' => $rubrica->created_at,
+                        'updated_at' => $rubrica->updated_at
                     ],
-                    'practica_asignada' => $rubrica->practica_id ? [
-                        'id' => $rubrica->practica_id,
-                        'nombre' => $rubrica->practica_nombre,
-                        'descripcion' => $rubrica->practica_descripcion,
-                        'fecha_inicio' => $rubrica->practica_fecha_inicio,
-                        'fecha_fin' => $rubrica->practica_fecha_fin,
-                        'profesor_id' => $rubrica->profesor_id
+                    'practica_asignada' => $rubrica->practica ? [
+                        'id' => $rubrica->practica->id,
+                        'identificador' => $rubrica->practica->identificador,
+                        'titulo' => $rubrica->practica->titulo,
+                        'descripcion' => $rubrica->practica->descripcion,
+                        'nombre_practica' => $rubrica->practica->nombre_practica,
+                        'fecha_entrega' => $rubrica->practica->fecha_entrega,
+                        'enlace_practica' => $rubrica->practica->enlace_practica,
+                        'profesor_id' => $rubrica->practica->profesor_id
                     ] : null,
-                    'profesor_practica' => $rubrica->profesor_id ? [
-                        'id' => $rubrica->profesor_id,
-                        'nombre' => $rubrica->profesor_nombre,
-                        'email' => $rubrica->profesor_email,
-                        'role' => $rubrica->profesor_role
+                    'profesor_practica' => $rubrica->practica && $rubrica->practica->profesor ? [
+                        'id' => $rubrica->practica->profesor->id,
+                        'nombre' => $rubrica->practica->profesor->name,
+                        'apellido' => $rubrica->practica->profesor->surname,
+                        'email' => $rubrica->practica->profesor->email,
+                        'rol' => $rubrica->practica->profesor->rol
                     ] : null,
-                    'evaluador_asignado' => $rubrica->evaluador_id ? [
-                        'id' => $rubrica->evaluador_id,
-                        'nombre' => $rubrica->evaluador_nombre,
-                        'email' => $rubrica->evaluador_email,
-                        'role' => $rubrica->evaluador_role
+                    'evaluador_asignado' => $rubrica->evaluador ? [
+                        'id' => $rubrica->evaluador->id,
+                        'nombre' => $rubrica->evaluador->name,
+                        'apellido' => $rubrica->evaluador->surname,
+                        'email' => $rubrica->evaluador->email,
+                        'rol' => $rubrica->evaluador->rol
                     ] : null,
-                    'criterios' => $criterios->toArray()
+                    'criterios' => $rubrica->criterios->map(function ($criterio) {
+                        return [
+                            'id' => $criterio->id,
+                            'nombre' => $criterio->nombre,
+                            'puntuacion_maxima' => $criterio->puntuacion_maxima,
+                            'descripcion' => $criterio->descripcion
+                        ];
+                    })
                 ];
             });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Rubricas obtenidas exitosamente',
-                'data' => $rubricasWithCriteria,
-                'total' => $rubricasWithCriteria->count()
+                'data' => $rubricasData,
+                'total' => $rubricasData->count()
             ], 200);
 
         } catch (\Exception $e) {

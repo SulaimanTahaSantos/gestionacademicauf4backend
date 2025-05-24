@@ -12,6 +12,7 @@ class Rubrica extends Model
         'nombre',
         'practica_id',
         'documento',
+        'evaluador_id',
     ];
 
     public function practica()
@@ -22,5 +23,15 @@ class Rubrica extends Model
     public function evaluadores()
     {
         return $this->belongsToMany(User::class, 'evaluador_rubrica', 'rubrica_id', 'user_id');
+    }
+
+    public function evaluador()
+    {
+        return $this->belongsTo(User::class, 'evaluador_id');
+    }
+
+    public function criterios()
+    {
+        return $this->hasMany(CriterioRubrica::class);
     }
 }
