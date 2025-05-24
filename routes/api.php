@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\GrupoController;
 use App\Http\Controllers\ModuloController;
 use App\Http\Controllers\NotaController;
+use App\Http\Controllers\EntregaController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
@@ -59,6 +60,9 @@ Route::get('/getNotas', [NotaController::class, 'getNotas']);
 Route::post('/notas', [NotaController::class, 'store']);
 Route::put('/notas/{id}', [NotaController::class, 'update']);
 Route::delete('/notas/{id}', [NotaController::class, 'destroy']);
+
+// Vista Entregas routes
+Route::get('/entregas', [EntregaController::class, 'getEntregas']);
 
 
 
