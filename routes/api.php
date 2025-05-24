@@ -57,6 +57,7 @@ Route::delete('/modulos/{id}', [ModuloController::class, 'destroy']);
 // Vista Notas routes
 Route::get('/getNotas', [NotaController::class, 'getNotas']);
 Route::post('/notas', [NotaController::class, 'store']);
+Route::put('/notas/{id}', [NotaController::class, 'update']);
 
 
 
