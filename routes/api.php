@@ -65,6 +65,7 @@ Route::delete('/notas/{id}', [NotaController::class, 'destroy']);
 Route::get('/entregas', [EntregaController::class, 'getEntregas']);
 Route::post('/entregas', [EntregaController::class, 'store']);
 Route::put('/entregas/{id}', [EntregaController::class, 'update']);
+Route::delete('/entregas/{id}', [EntregaController::class, 'destroy']);
 
 
 

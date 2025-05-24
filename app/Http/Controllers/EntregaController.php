@@ -263,5 +263,51 @@ class EntregaController extends Controller
             ], 500);
         }
     }
-   
+    
+    public function destroy($id)
+    {
+        try {
+            $entrega = Entrega::find($id);
+            
+            if (!$entrega) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Entrega no encontrada'
+                ], 404);
+            }
+
+            $entregaInfo = Entrega::select(
+                'entregas.id as entrega_id',
+                'entregas.archivo as archivo',
+                'alumnos.name as alumno_name',
+                'alumnos.surname as alumno_surname',
+                'practicas.titulo as practica_titulo',
+                'practicas.identificador as practica_identificador'
+            )
+            ->leftJoin('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
+            ->leftJoin('practicas', 'entregas.practica_id', '=', 'practicas.id')
+            ->where('entregas.id', $entrega->id)
+            ->first();
+
+            $entrega->delete();
+
+            return response()->json([
+                'success' => true,
+                'data' => $entregaInfo,
+                'message' => 'Entrega eliminada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega no encontrada'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la entrega: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
