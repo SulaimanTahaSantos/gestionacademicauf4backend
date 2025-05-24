@@ -21,14 +21,12 @@ class EntregaController extends Controller
                 'entregas.fecha_entrega as fecha_entrega',
                 'entregas.archivo as archivo',
                 
-                // Datos del alumno
                 'alumnos.name as alumno_name',
                 'alumnos.surname as alumno_surname',
                 'alumnos.email as alumno_email',
                 'alumnos.dni as alumno_dni',
                 'alumnos.rol as alumno_rol',
                 
-                // Datos de la práctica
                 'practicas.id as practica_id',
                 'practicas.identificador as practica_identificador',
                 'practicas.titulo as practica_titulo',
@@ -37,23 +35,19 @@ class EntregaController extends Controller
                 'practicas.fecha_entrega as practica_fecha_entrega',
                 'practicas.enlace_practica as practica_enlace',
                 
-                // Datos del profesor de la práctica
                 'profesores.name as profesor_name',
                 'profesores.surname as profesor_surname',
                 'profesores.email as profesor_email',
                 'profesores.rol as profesor_rol',
                 
-                // Datos de la rúbrica
                 'rubricas.id as rubrica_id',
                 'rubricas.nombre as rubrica_nombre',
                 'rubricas.documento as rubrica_documento',
                 
-                // Datos de la nota
                 'notas.id as nota_id',
                 'notas.nota_final as nota_final',
                 'notas.comentario as nota_comentario',
                 
-                // Datos del evaluador (profesor que calificó)
                 'evaluadores.name as evaluador_name',
                 'evaluadores.surname as evaluador_surname',
                 'evaluadores.email as evaluador_email'
@@ -81,57 +75,83 @@ class EntregaController extends Controller
         }
     }
     
-    public function debugEntregas()
+    public function store(Request $request)
     {
         try {
-            // Check all entregas with their relationships
-            $entregas = Entrega::all();
-            $practicas = Practica::all();
-            $rubricas = Rubrica::all();
-            $users = User::all();
-            
-            $debug_data = [
-                'entregas_count' => $entregas->count(),
-                'practicas_count' => $practicas->count(),
-                'rubricas_count' => $rubricas->count(),
-                'users_count' => $users->count(),
-                'entregas' => $entregas,
-                'practicas' => $practicas,
-                'rubricas' => $rubricas,
-                'users' => $users->map(function($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'rol' => $user->rol
-                    ];
-                }),
-                'relationship_issues' => []
-            ];
-            
-            // Check for relationship issues
-            foreach ($entregas as $entrega) {
-                $practica_exists = $practicas->where('id', $entrega->practica_id)->first();
-                $user_exists = $users->where('id', $entrega->user_id)->first();
-                
-                if (!$practica_exists) {
-                    $debug_data['relationship_issues'][] = "Entrega {$entrega->id} references non-existent practica_id {$entrega->practica_id}";
-                }
-                
-                if (!$user_exists) {
-                    $debug_data['relationship_issues'][] = "Entrega {$entrega->id} references non-existent user_id {$entrega->user_id}";
-                }
+            $validated = $request->validate([
+                'practica_id' => 'required|exists:practicas,id',
+                'user_id' => 'required|exists:users,id',
+                'fecha_entrega' => 'required|date',
+                'archivo' => 'required|string|max:255'
+            ]);
+
+            $alumno = User::where('id', $validated['user_id'])
+                          ->where('rol', 'user')
+                          ->first();
+
+            if (!$alumno) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El usuario seleccionado debe ser un alumno (rol: user)'
+                ], 422);
             }
-            
+
+            $practica = Practica::find($validated['practica_id']);
+            if (!$practica) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La práctica especificada no existe'
+                ], 422);
+            }
+
+            $entrega = Entrega::create($validated);
+
+            $entregaCompleta = Entrega::select(
+                'entregas.id as entrega_id',
+                'entregas.practica_id as entrega_practica_id',
+                'entregas.user_id as entrega_user_id',
+                'entregas.fecha_entrega as fecha_entrega',
+                'entregas.archivo as archivo',
+                
+                // Datos del alumno
+                'alumnos.name as alumno_name',
+                'alumnos.surname as alumno_surname',
+                'alumnos.email as alumno_email',
+                'alumnos.dni as alumno_dni',
+                
+                'practicas.identificador as practica_identificador',
+                'practicas.titulo as practica_titulo',
+                'practicas.nombre_practica as practica_nombre',
+                'practicas.fecha_entrega as practica_fecha_entrega',
+                
+                'profesores.name as profesor_name',
+                'profesores.surname as profesor_surname'
+            )
+            ->join('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
+            ->join('practicas', 'entregas.practica_id', '=', 'practicas.id')
+            ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
+            ->where('entregas.id', $entrega->id)
+            ->first();
+
             return response()->json([
                 'success' => true,
-                'debug_data' => $debug_data
-            ], 200);
-            
+                'data' => $entregaCompleta,
+                'message' => 'Entrega creada correctamente'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error in debug: ' . $e->getMessage()
+                'message' => 'Error al crear la entrega: ' . $e->getMessage()
             ], 500);
         }
     }
+   
 }
