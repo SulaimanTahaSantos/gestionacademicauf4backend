@@ -125,14 +125,17 @@ class GrupoController extends Controller
                 ]);
 
                 $usuarioData = null;
-                if ($cursar && $cursar->usuario) {
-                    $usuarioData = [
-                        'id' => $cursar->usuario->id,
-                        'nombre' => $cursar->usuario->name,
-                        'apellido' => $cursar->usuario->surname,
-                        'email' => $cursar->usuario->email,
-                        'dni' => $cursar->usuario->dni
-                    ];
+                if ($userId) {
+                    $modulo->load('user');
+                    if ($modulo->user) {
+                        $usuarioData = [
+                            'id' => $modulo->user->id,
+                            'nombre' => $modulo->user->name,
+                            'apellido' => $modulo->user->surname,
+                            'email' => $modulo->user->email,
+                            'dni' => $modulo->user->dni
+                        ];
+                    }
                 }
 
                 $modulosCreados[] = [
@@ -272,14 +275,18 @@ class GrupoController extends Controller
                 }
 
                 $usuarioData = null;
-                if ($cursar && $cursar->usuario) {
-                    $usuarioData = [
-                        'id' => $cursar->usuario->id,
-                        'nombre' => $cursar->usuario->name,
-                        'apellido' => $cursar->usuario->surname,
-                        'email' => $cursar->usuario->email,
-                        'dni' => $cursar->usuario->dni
-                    ];
+                if ($userId) {
+                    // Load the user directly from the module's user_id
+                    $modulo->load('user');
+                    if ($modulo->user) {
+                        $usuarioData = [
+                            'id' => $modulo->user->id,
+                            'nombre' => $modulo->user->name,
+                            'apellido' => $modulo->user->surname,
+                            'email' => $modulo->user->email,
+                            'dni' => $modulo->user->dni
+                        ];
+                    }
                 }
 
                 $modulosActualizados[] = [
