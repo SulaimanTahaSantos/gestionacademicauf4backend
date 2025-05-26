@@ -34,4 +34,9 @@ class Rubrica extends Model
     {
         return $this->hasMany(CriterioRubrica::class);
     }
+
+    public function notas()
+    {
+        return $this->hasMany(Nota::class);
+    }
 }
