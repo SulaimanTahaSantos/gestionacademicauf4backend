@@ -14,23 +14,30 @@ class ModuloController extends Controller
     public function getModulos()
     {
         try {
-            $modulos = Modulo::select(
-                'modulos.id as modulo_id',
-                'modulos.nombre as modulo_nombre',
-                'modulos.codigo as modulo_codigo',
-                'modulos.descripcion as modulo_descripcion',
-                'grupo.nombre as grupo_nombre',
-                'users.name as profesor_name',
-                'users.surname as profesor_surname'
-            )
-            ->join('grupo', 'modulos.grupo_id', '=', 'grupo.id')
-            ->join('users', 'modulos.user_id', '=', 'users.id')
-            ->where('users.rol', 'profesor')
-            ->get();
+            $modulos = Modulo::with([
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'user' => function($query) {
+                    $query->select('id', 'name', 'surname', 'rol')->where('rol', 'profesor');
+                }
+            ])->get();
+
+            $modulosData = $modulos->map(function ($modulo) {
+                return [
+                    'modulo_id' => $modulo->id,
+                    'modulo_nombre' => $modulo->nombre,
+                    'modulo_codigo' => $modulo->codigo,
+                    'modulo_descripcion' => $modulo->descripcion,
+                    'grupo_nombre' => $modulo->grupo->nombre ?? null,
+                    'profesor_name' => $modulo->user->name ?? null,
+                    'profesor_surname' => $modulo->user->surname ?? null,
+                ];
+            });
 
             return response()->json([
                 'success' => true,
-                'data' => $modulos,
+                'data' => $modulosData,
                 'message' => 'Módulos obtenidos correctamente'
             ], 200);
 
@@ -54,12 +61,10 @@ class ModuloController extends Controller
                 'user_id' => 'required|exists:users,id'
             ]);
 
-            // Verificar que el usuario tenga rol profesor
-            $profesor = User::where('id', $validated['user_id'])
-                           ->where('rol', 'profesor')
-                           ->first();
+            // Verificar que el usuario tenga rol profesor usando findOrFail
+            $profesor = User::findOrFail($validated['user_id']);
 
-            if (!$profesor) {
+            if ($profesor->rol !== 'profesor') {
                 return response()->json([
                     'success' => false,
                     'message' => 'El usuario seleccionado no es un profesor'
@@ -68,25 +73,28 @@ class ModuloController extends Controller
 
             $modulo = Modulo::create($validated);
 
-            // Obtener los datos completos del módulo creado
-            $moduloConDatos = Modulo::select(
-                'modulos.id as modulo_id',
-                'modulos.codigo as modulo_codigo',
-                'modulos.nombre as modulo_nombre',
-                'modulos.descripcion as modulo_descripcion',
-                'grupo.nombre as grupo_nombre',
-                'users.name as profesor_name',
-                'users.surname as profesor_surname'
-            )
-            ->join('grupo', 'modulos.grupo_id', '=', 'grupo.id')
-            ->join('users', 'modulos.user_id', '=', 'users.id')
-            ->where('modulos.id', $modulo->id)
-            ->where('users.rol', 'profesor')
-            ->first();
+            $modulo->load([
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'user' => function($query) {
+                    $query->select('id', 'name', 'surname', 'rol');
+                }
+            ]);
+
+            $responseData = [
+                'modulo_id' => $modulo->id,
+                'modulo_codigo' => $modulo->codigo,
+                'modulo_nombre' => $modulo->nombre,
+                'modulo_descripcion' => $modulo->descripcion,
+                'grupo_nombre' => $modulo->grupo->nombre,
+                'profesor_name' => $modulo->user->name,
+                'profesor_surname' => $modulo->user->surname,
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => $moduloConDatos,
+                'data' => $responseData,
                 'message' => 'Módulo creado correctamente'
             ], 201);
 
@@ -124,11 +132,9 @@ class ModuloController extends Controller
                 'user_id' => 'required|exists:users,id'
             ]);
 
-            $profesor = User::where('id', $validated['user_id'])
-                           ->where('rol', 'profesor')
-                           ->first();
+            $profesor = User::findOrFail($validated['user_id']);
 
-            if (!$profesor) {
+            if ($profesor->rol !== 'profesor') {
                 return response()->json([
                     'success' => false,
                     'message' => 'El usuario seleccionado no es un profesor'
@@ -137,24 +143,28 @@ class ModuloController extends Controller
 
             $modulo->update($validated);
 
-            $moduloConDatos = Modulo::select(
-                'modulos.id as modulo_id',
-                'modulos.codigo as modulo_codigo',
-                'modulos.nombre as modulo_nombre',
-                'modulos.descripcion as modulo_descripcion',
-                'grupo.nombre as grupo_nombre',
-                'users.name as profesor_name',
-                'users.surname as profesor_surname'
-            )
-            ->join('grupo', 'modulos.grupo_id', '=', 'grupo.id')
-            ->join('users', 'modulos.user_id', '=', 'users.id')
-            ->where('modulos.id', $modulo->id)
-            ->where('users.rol', 'profesor')
-            ->first();
+            $modulo->load([
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'user' => function($query) {
+                    $query->select('id', 'name', 'surname', 'rol');
+                }
+            ]);
+
+            $responseData = [
+                'modulo_id' => $modulo->id,
+                'modulo_codigo' => $modulo->codigo,
+                'modulo_nombre' => $modulo->nombre,
+                'modulo_descripcion' => $modulo->descripcion,
+                'grupo_nombre' => $modulo->grupo->nombre,
+                'profesor_name' => $modulo->user->name,
+                'profesor_surname' => $modulo->user->surname,
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => $moduloConDatos,
+                'data' => $responseData,
                 'message' => 'Módulo actualizado correctamente'
             ], 200);
 

@@ -19,25 +19,27 @@ class GrupoController extends Controller
     public function getGrupos()
     {
         try {
-            $grupos = Grupo::all();
+            $grupos = Grupo::with([
+                'cursars.usuario' => function($query) {
+                    $query->where('rol', 'user');
+                },
+                'modulos.cursar.usuario' => function($query) {
+                    $query->where('rol', 'user');
+                }
+            ])->get();
             
             $resultado = $grupos->map(function($grupo) {
-                $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
-                
-                $cursarIds = $cursarsDelGrupo->pluck('id');
-                $modulos = Modulo::whereIn('cursar_id', $cursarIds)->get();
-                
-                $modulosConUsuarios = $modulos->map(function($modulo) {
-                    $cursar = Cursar::find($modulo->cursar_id);
+                // Get modulos through relationships
+                $modulosConUsuarios = $grupo->modulos->map(function($modulo) {
                     $usuario = null;
                     
-                    if ($cursar && $cursar->usuario && $cursar->usuario->rol === 'user') {
+                    if ($modulo->cursar && $modulo->cursar->usuario && $modulo->cursar->usuario->rol === 'user') {
                         $usuario = [
-                            'id' => $cursar->usuario->id,
-                            'nombre' => $cursar->usuario->name,
-                            'apellido' => $cursar->usuario->surname,
-                            'email' => $cursar->usuario->email,
-                            'dni' => $cursar->usuario->dni
+                            'id' => $modulo->cursar->usuario->id,
+                            'nombre' => $modulo->cursar->usuario->name,
+                            'apellido' => $modulo->cursar->usuario->surname,
+                            'email' => $modulo->cursar->usuario->email,
+                            'dni' => $modulo->cursar->usuario->dni
                         ];
                     }
                     
@@ -187,10 +189,9 @@ class GrupoController extends Controller
                 'user_id' => $validated['user_id']
             ]);
 
-            // Obtener módulos existentes del grupo
-            $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
-            $cursarIds = $cursarsDelGrupo->pluck('id');
-            $modulosExistentes = Modulo::whereIn('cursar_id', $cursarIds)->get();
+            // Obtener módulos existentes del grupo usando relaciones
+            $grupo->load(['cursars', 'modulos.cursar']);
+            $modulosExistentes = $grupo->modulos;
             $modulosExistentesIds = $modulosExistentes->pluck('id');
 
             $modulosActualizados = [];
@@ -315,21 +316,16 @@ class GrupoController extends Controller
     public function deleteGrupoCompleto($id)
     {
         try {
-            // Buscar el grupo
-            $grupo = Grupo::find($id);
+            // Buscar el grupo y cargar relaciones
+            $grupo = Grupo::with(['cursars', 'modulos'])->findOrFail($id);
 
-            $cursarsDelGrupo = Cursar::where('grupo_id', $grupo->id)->get();
-            
-            $cursarIds = $cursarsDelGrupo->pluck('id');
-            $modulos = Modulo::whereIn('cursar_id', $cursarIds)->get();
-
-            $modulosSinCursar = Modulo::whereNull('cursar_id')->get();
-
-            foreach ($modulos as $modulo) {
+            // Eliminar módulos usando relaciones
+            foreach ($grupo->modulos as $modulo) {
                 $modulo->delete();
             }
 
-            foreach ($cursarsDelGrupo as $cursar) {
+            // Eliminar cursars usando relaciones
+            foreach ($grupo->cursars as $cursar) {
                 $cursar->delete();
             }
 

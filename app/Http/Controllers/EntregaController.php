@@ -14,57 +14,73 @@ class EntregaController extends Controller
     public function getEntregas()
     {
         try {
-            $entregas = Entrega::select(
-                'entregas.id as entrega_id',
-                'entregas.practica_id as entrega_practica_id',
-                'entregas.user_id as entrega_user_id',
-                'entregas.fecha_entrega as fecha_entrega',
-                'entregas.archivo as archivo',
-                
-                'alumnos.name as alumno_name',
-                'alumnos.surname as alumno_surname',
-                'alumnos.email as alumno_email',
-                'alumnos.dni as alumno_dni',
-                'alumnos.rol as alumno_rol',
-                
-                'practicas.id as practica_id',
-                'practicas.identificador as practica_identificador',
-                'practicas.titulo as practica_titulo',
-                'practicas.descripcion as practica_descripcion',
-                'practicas.nombre_practica as practica_nombre',
-                'practicas.fecha_entrega as practica_fecha_entrega',
-                'practicas.enlace_practica as practica_enlace',
-                
-                'profesores.name as profesor_name',
-                'profesores.surname as profesor_surname',
-                'profesores.email as profesor_email',
-                'profesores.rol as profesor_rol',
-                
-                'rubricas.id as rubrica_id',
-                'rubricas.nombre as rubrica_nombre',
-                'rubricas.documento as rubrica_documento',
-                
-                'notas.id as nota_id',
-                'notas.nota_final as nota_final',
-                'notas.comentario as nota_comentario',
-                
-                'evaluadores.name as evaluador_name',
-                'evaluadores.surname as evaluador_surname',
-                'evaluadores.email as evaluador_email'
-            )
-            ->leftJoin('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
-            ->leftJoin('practicas', 'entregas.practica_id', '=', 'practicas.id')
-            ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
-            ->leftJoin('rubricas', 'practicas.id', '=', 'rubricas.practica_id')
-            ->leftJoin('notas', 'entregas.id', '=', 'notas.entrega_id')
-            ->leftJoin('users as evaluadores', 'notas.user_id', '=', 'evaluadores.id')
-            ->get();
+            $entregas = Entrega::with([
+                'alumno' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'dni', 'rol');
+                },
+                'practica' => function($query) {
+                    $query->select('id', 'identificador', 'titulo', 'descripcion', 'nombre_practica', 'fecha_entrega', 'enlace_practica', 'profesor_id');
+                },
+                'practica.profesor' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'nota' => function($query) {
+                    $query->select('id', 'entrega_id', 'nota_final', 'comentario', 'user_id', 'rubrica_id');
+                },
+                'nota.evaluador' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'rol');
+                },
+                'nota.rubrica' => function($query) {
+                    $query->select('id', 'nombre', 'documento');
+                }
+            ])->get();
+
+            $entregasData = $entregas->map(function ($entrega) {
+                return [
+                    'entrega_id' => $entrega->id,
+                    'entrega_practica_id' => $entrega->practica_id,
+                    'entrega_user_id' => $entrega->user_id,
+                    'fecha_entrega' => $entrega->fecha_entrega,
+                    'archivo' => $entrega->archivo,
+                    
+                    'alumno_name' => $entrega->alumno->name ?? null,
+                    'alumno_surname' => $entrega->alumno->surname ?? null,
+                    'alumno_email' => $entrega->alumno->email ?? null,
+                    'alumno_dni' => $entrega->alumno->dni ?? null,
+                    'alumno_rol' => $entrega->alumno->rol ?? null,
+                    
+                    'practica_id' => $entrega->practica->id ?? null,
+                    'practica_identificador' => $entrega->practica->identificador ?? null,
+                    'practica_titulo' => $entrega->practica->titulo ?? null,
+                    'practica_descripcion' => $entrega->practica->descripcion ?? null,
+                    'practica_nombre' => $entrega->practica->nombre_practica ?? null,
+                    'practica_fecha_entrega' => $entrega->practica->fecha_entrega ?? null,
+                    'practica_enlace' => $entrega->practica->enlace_practica ?? null,
+                    
+                    'profesor_name' => $entrega->practica->profesor->name ?? null,
+                    'profesor_surname' => $entrega->practica->profesor->surname ?? null,
+                    'profesor_email' => $entrega->practica->profesor->email ?? null,
+                    'profesor_rol' => $entrega->practica->profesor->rol ?? null,
+                    
+                    'rubrica_id' => $entrega->nota->rubrica->id ?? null,
+                    'rubrica_nombre' => $entrega->nota->rubrica->nombre ?? null,
+                    'rubrica_documento' => $entrega->nota->rubrica->documento ?? null,
+                    
+                    'nota_id' => $entrega->nota->id ?? null,
+                    'nota_final' => $entrega->nota->nota_final ?? null,
+                    'nota_comentario' => $entrega->nota->comentario ?? null,
+                    
+                    'evaluador_name' => $entrega->nota->evaluador->name ?? null,
+                    'evaluador_surname' => $entrega->nota->evaluador->surname ?? null,
+                    'evaluador_email' => $entrega->nota->evaluador->email ?? null,
+                ];
+            });
 
             return response()->json([
                 'success' => true,
-                'data' => $entregas,
+                'data' => $entregasData,
                 'message' => 'Entregas obtenidas correctamente',
-                'total_count' => $entregas->count()
+                'total_count' => $entregasData->count()
             ], 200);
 
         } catch (\Exception $e) {
@@ -85,11 +101,10 @@ class EntregaController extends Controller
                 'archivo' => 'required|string|max:255'
             ]);
 
-            $alumno = User::where('id', $validated['user_id'])
-                          ->where('rol', 'user')
-                          ->first();
+            // Use findOrFail and validate role through relationship
+            $alumno = User::findOrFail($validated['user_id']);
 
-            if (!$alumno) {
+            if ($alumno->rol !== 'user') {
                 return response()->json([
                     'success' => false,
                     'message' => 'El usuario seleccionado debe ser un alumno (rol: user)'
@@ -106,36 +121,42 @@ class EntregaController extends Controller
 
             $entrega = Entrega::create($validated);
 
-            $entregaCompleta = Entrega::select(
-                'entregas.id as entrega_id',
-                'entregas.practica_id as entrega_practica_id',
-                'entregas.user_id as entrega_user_id',
-                'entregas.fecha_entrega as fecha_entrega',
-                'entregas.archivo as archivo',
+            $entrega->load([
+                'alumno' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'dni');
+                },
+                'practica' => function($query) {
+                    $query->select('id', 'identificador', 'titulo', 'nombre_practica', 'fecha_entrega', 'profesor_id');
+                },
+                'practica.profesor' => function($query) {
+                    $query->select('id', 'name', 'surname');
+                }
+            ]);
+
+            $responseData = [
+                'entrega_id' => $entrega->id,
+                'entrega_practica_id' => $entrega->practica_id,
+                'entrega_user_id' => $entrega->user_id,
+                'fecha_entrega' => $entrega->fecha_entrega,
+                'archivo' => $entrega->archivo,
                 
-                // Datos del alumno
-                'alumnos.name as alumno_name',
-                'alumnos.surname as alumno_surname',
-                'alumnos.email as alumno_email',
-                'alumnos.dni as alumno_dni',
+                'alumno_name' => $entrega->alumno->name,
+                'alumno_surname' => $entrega->alumno->surname,
+                'alumno_email' => $entrega->alumno->email,
+                'alumno_dni' => $entrega->alumno->dni,
                 
-                'practicas.identificador as practica_identificador',
-                'practicas.titulo as practica_titulo',
-                'practicas.nombre_practica as practica_nombre',
-                'practicas.fecha_entrega as practica_fecha_entrega',
+                'practica_identificador' => $entrega->practica->identificador,
+                'practica_titulo' => $entrega->practica->titulo,
+                'practica_nombre' => $entrega->practica->nombre_practica,
+                'practica_fecha_entrega' => $entrega->practica->fecha_entrega,
                 
-                'profesores.name as profesor_name',
-                'profesores.surname as profesor_surname'
-            )
-            ->join('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
-            ->join('practicas', 'entregas.practica_id', '=', 'practicas.id')
-            ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
-            ->where('entregas.id', $entrega->id)
-            ->first();
+                'profesor_name' => $entrega->practica->profesor->name,
+                'profesor_surname' => $entrega->practica->profesor->surname,
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => $entregaCompleta,
+                'data' => $responseData,
                 'message' => 'Entrega creada correctamente'
             ], 201);
 
@@ -175,11 +196,9 @@ class EntregaController extends Controller
             ]);
 
             if (isset($validated['user_id'])) {
-                $alumno = User::where('id', $validated['user_id'])
-                              ->where('rol', 'user')
-                              ->first();
+                $alumno = User::findOrFail($validated['user_id']);
 
-                if (!$alumno) {
+                if ($alumno->rol !== 'user') {
                     return response()->json([
                         'success' => false,
                         'message' => 'El usuario seleccionado debe ser un alumno (rol: user)'
@@ -199,47 +218,60 @@ class EntregaController extends Controller
 
             $entrega->update($validated);
 
-            $entregaCompleta = Entrega::select(
-                'entregas.id as entrega_id',
-                'entregas.practica_id as entrega_practica_id',
-                'entregas.user_id as entrega_user_id',
-                'entregas.fecha_entrega as fecha_entrega',
-                'entregas.archivo as archivo',
+            $entrega->load([
+                'alumno' => function($query) {
+                    $query->select('id', 'name', 'surname', 'email', 'dni');
+                },
+                'practica' => function($query) {
+                    $query->select('id', 'identificador', 'titulo', 'nombre_practica', 'fecha_entrega', 'profesor_id');
+                },
+                'practica.profesor' => function($query) {
+                    $query->select('id', 'name', 'surname');
+                },
+                'nota' => function($query) {
+                    $query->select('id', 'entrega_id', 'nota_final', 'comentario', 'user_id', 'rubrica_id');
+                },
+                'nota.evaluador' => function($query) {
+                    $query->select('id', 'name', 'surname');
+                },
+                'nota.rubrica' => function($query) {
+                    $query->select('id', 'nombre', 'documento');
+                }
+            ]);
+
+            $responseData = [
+                'entrega_id' => $entrega->id,
+                'entrega_practica_id' => $entrega->practica_id,
+                'entrega_user_id' => $entrega->user_id,
+                'fecha_entrega' => $entrega->fecha_entrega,
+                'archivo' => $entrega->archivo,
                 
-                'alumnos.name as alumno_name',
-                'alumnos.surname as alumno_surname',
-                'alumnos.email as alumno_email',
-                'alumnos.dni as alumno_dni',
+                'alumno_name' => $entrega->alumno->name,
+                'alumno_surname' => $entrega->alumno->surname,
+                'alumno_email' => $entrega->alumno->email,
+                'alumno_dni' => $entrega->alumno->dni,
                 
-                'practicas.identificador as practica_identificador',
-                'practicas.titulo as practica_titulo',
-                'practicas.nombre_practica as practica_nombre',
-                'practicas.fecha_entrega as practica_fecha_entrega',
+                'practica_identificador' => $entrega->practica->identificador,
+                'practica_titulo' => $entrega->practica->titulo,
+                'practica_nombre' => $entrega->practica->nombre_practica,
+                'practica_fecha_entrega' => $entrega->practica->fecha_entrega,
                 
-                'profesores.name as profesor_name',
-                'profesores.surname as profesor_surname',
+                'profesor_name' => $entrega->practica->profesor->name,
+                'profesor_surname' => $entrega->practica->profesor->surname,
                 
-                'rubricas.nombre as rubrica_nombre',
-                'rubricas.documento as rubrica_documento',
+                'rubrica_nombre' => $entrega->nota->rubrica->nombre ?? null,
+                'rubrica_documento' => $entrega->nota->rubrica->documento ?? null,
                 
-                'notas.nota_final as nota_final',
-                'notas.comentario as nota_comentario',
+                'nota_final' => $entrega->nota->nota_final ?? null,
+                'nota_comentario' => $entrega->nota->comentario ?? null,
                 
-                'evaluadores.name as evaluador_name',
-                'evaluadores.surname as evaluador_surname'
-            )
-            ->leftJoin('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
-            ->leftJoin('practicas', 'entregas.practica_id', '=', 'practicas.id')
-            ->leftJoin('users as profesores', 'practicas.profesor_id', '=', 'profesores.id')
-            ->leftJoin('rubricas', 'practicas.id', '=', 'rubricas.practica_id')
-            ->leftJoin('notas', 'entregas.id', '=', 'notas.entrega_id')
-            ->leftJoin('users as evaluadores', 'notas.user_id', '=', 'evaluadores.id')
-            ->where('entregas.id', $entrega->id)
-            ->first();
+                'evaluador_name' => $entrega->nota->evaluador->name ?? null,
+                'evaluador_surname' => $entrega->nota->evaluador->surname ?? null,
+            ];
 
             return response()->json([
                 'success' => true,
-                'data' => $entregaCompleta,
+                'data' => $responseData,
                 'message' => 'Entrega actualizada correctamente'
             ], 200);
 
@@ -276,18 +308,23 @@ class EntregaController extends Controller
                 ], 404);
             }
 
-            $entregaInfo = Entrega::select(
-                'entregas.id as entrega_id',
-                'entregas.archivo as archivo',
-                'alumnos.name as alumno_name',
-                'alumnos.surname as alumno_surname',
-                'practicas.titulo as practica_titulo',
-                'practicas.identificador as practica_identificador'
-            )
-            ->leftJoin('users as alumnos', 'entregas.user_id', '=', 'alumnos.id')
-            ->leftJoin('practicas', 'entregas.practica_id', '=', 'practicas.id')
-            ->where('entregas.id', $entrega->id)
-            ->first();
+            $entrega->load([
+                'alumno' => function($query) {
+                    $query->select('id', 'name', 'surname');
+                },
+                'practica' => function($query) {
+                    $query->select('id', 'titulo', 'identificador');
+                }
+            ]);
+
+            $entregaInfo = [
+                'entrega_id' => $entrega->id,
+                'archivo' => $entrega->archivo,
+                'alumno_name' => $entrega->alumno->name,
+                'alumno_surname' => $entrega->alumno->surname,
+                'practica_titulo' => $entrega->practica->titulo,
+                'practica_identificador' => $entrega->practica->identificador,
+            ];
 
             $entrega->delete();
 
