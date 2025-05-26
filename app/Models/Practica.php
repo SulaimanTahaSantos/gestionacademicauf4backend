@@ -35,14 +35,4 @@ class Practica extends Model
     {
         return $this->belongsTo(Grupo::class);
     }
-
-    public function rubrica()
-    {
-        return $this->hasOne(Rubrica::class);
-    }
-
-    public function entregas()
-    {
-        return $this->hasMany(Entrega::class);
-    }
 }

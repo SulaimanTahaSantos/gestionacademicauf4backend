@@ -11,33 +11,24 @@ class NotaController extends Controller
     public function getNotas()
     {
         try {
-            $notas = Nota::with([
-                'entrega' => function($query) {
-                    $query->select('id', 'archivo', 'user_id');
-                },
-                'entrega.alumno' => function($query) {
-                    $query->select('id', 'name', 'surname')->where('rol', 'user');
-                },
-                'rubrica' => function($query) {
-                    $query->select('id', 'documento');
-                }
-            ])->get();
-
-            $notasData = $notas->map(function ($nota) {
-                return [
-                    'notas_id' => $nota->id,
-                    'nota_final' => $nota->nota_final,
-                    'notas_comentario' => $nota->comentario,
-                    'entregas_archivo' => $nota->entrega->archivo ?? null,
-                    'alumno_name' => $nota->entrega->alumno->name ?? null,
-                    'alumno_surname' => $nota->entrega->alumno->surname ?? null,
-                    'rubrica_documento' => $nota->rubrica->documento ?? null,
-                ];
-            });
+            $notas = Nota::select(
+                'notas.id as notas_id',
+                'notas.nota_final as nota_final',
+                'notas.comentario as notas_comentario',
+                'entregas.archivo as entregas_archivo',
+                'users.name as alumno_name',
+                'users.surname as alumno_surname',
+                'rubricas.documento as rubrica_documento'
+            )
+            ->join('entregas', 'notas.entrega_id', '=', 'entregas.id')
+            ->join('users', 'entregas.user_id', '=', 'users.id')  
+            ->leftJoin('rubricas', 'notas.rubrica_id', '=', 'rubricas.id')  
+            ->where('users.rol', 'user')  
+            ->get();
 
             return response()->json([
                 'success' => true,
-                'data' => $notasData,
+                'data' => $notas,
                 'message' => 'Notas obtenidas correctamente'
             ], 200);
 
@@ -61,9 +52,11 @@ class NotaController extends Controller
             ]);
 
             if (isset($validated['user_id'])) {
-                $evaluador = User::findOrFail($validated['user_id']);
+                $evaluador = User::where('id', $validated['user_id'])
+                                ->where('rol', 'profesor')
+                                ->first();
 
-                if ($evaluador->rol !== 'profesor') {
+                if (!$evaluador) {
                     return response()->json([
                         'success' => false,
                         'message' => 'El evaluador debe ser un profesor'
@@ -73,36 +66,27 @@ class NotaController extends Controller
 
             $nota = Nota::create($validated);
 
-            $nota->load([
-                'entrega' => function($query) {
-                    $query->select('id', 'archivo', 'user_id');
-                },
-                'entrega.alumno' => function($query) {
-                    $query->select('id', 'name', 'surname');
-                },
-                'evaluador' => function($query) {
-                    $query->select('id', 'name', 'surname');
-                },
-                'rubrica' => function($query) {
-                    $query->select('id', 'documento');
-                }
-            ]);
-
-            $responseData = [
-                'notas_id' => $nota->id,
-                'nota_final' => $nota->nota_final,
-                'notas_comentario' => $nota->comentario,
-                'entregas_archivo' => $nota->entrega->archivo,
-                'alumno_name' => $nota->entrega->alumno->name,
-                'alumno_surname' => $nota->entrega->alumno->surname,
-                'evaluador_name' => $nota->evaluador->name,
-                'evaluador_surname' => $nota->evaluador->surname,
-                'rubrica_documento' => $nota->rubrica->documento ?? null,
-            ];
+            $notaCompleta = Nota::select(
+                'notas.id as notas_id',
+                'notas.nota_final as nota_final',
+                'notas.comentario as notas_comentario',
+                'entregas.archivo as entregas_archivo',
+                'users.name as alumno_name',
+                'users.surname as alumno_surname',
+                'evaluadores.name as evaluador_name',
+                'evaluadores.surname as evaluador_surname',
+                'rubricas.documento as rubrica_documento'
+            )
+            ->leftJoin('entregas', 'notas.entrega_id', '=', 'entregas.id')
+            ->leftJoin('users', 'entregas.user_id', '=', 'users.id')
+            ->leftJoin('users as evaluadores', 'notas.user_id', '=', 'evaluadores.id')
+            ->leftJoin('rubricas', 'notas.rubrica_id', '=', 'rubricas.id')
+            ->where('notas.id', $nota->id)
+            ->first();
 
             return response()->json([
                 'success' => true,
-                'data' => $responseData,
+                'data' => $notaCompleta,
                 'message' => 'Nota creada correctamente'
             ], 201);
 
@@ -142,9 +126,11 @@ class NotaController extends Controller
             ]);
 
             if (isset($validated['user_id'])) {
-                $evaluador = User::findOrFail($validated['user_id']);
+                $evaluador = User::where('id', $validated['user_id'])
+                                ->where('rol', 'profesor')
+                                ->first();
 
-                if ($evaluador->rol !== 'profesor') {
+                if (!$evaluador) {
                     return response()->json([
                         'success' => false,
                         'message' => 'El evaluador debe ser un profesor'
@@ -154,36 +140,27 @@ class NotaController extends Controller
 
             $nota->update($validated);
 
-            $nota->load([
-                'entrega' => function($query) {
-                    $query->select('id', 'archivo', 'user_id');
-                },
-                'entrega.alumno' => function($query) {
-                    $query->select('id', 'name', 'surname');
-                },
-                'evaluador' => function($query) {
-                    $query->select('id', 'name', 'surname');
-                },
-                'rubrica' => function($query) {
-                    $query->select('id', 'documento');
-                }
-            ]);
-
-            $responseData = [
-                'notas_id' => $nota->id,
-                'nota_final' => $nota->nota_final,
-                'notas_comentario' => $nota->comentario,
-                'entregas_archivo' => $nota->entrega->archivo,
-                'alumno_name' => $nota->entrega->alumno->name,
-                'alumno_surname' => $nota->entrega->alumno->surname,
-                'evaluador_name' => $nota->evaluador->name,
-                'evaluador_surname' => $nota->evaluador->surname,
-                'rubrica_documento' => $nota->rubrica->documento ?? null,
-            ];
+            $notaCompleta = Nota::select(
+                'notas.id as notas_id',
+                'notas.nota_final as nota_final',
+                'notas.comentario as notas_comentario',
+                'entregas.archivo as entregas_archivo',
+                'users.name as alumno_name',
+                'users.surname as alumno_surname',
+                'evaluadores.name as evaluador_name',
+                'evaluadores.surname as evaluador_surname',
+                'rubricas.documento as rubrica_documento'
+            )
+            ->leftJoin('entregas', 'notas.entrega_id', '=', 'entregas.id')
+            ->leftJoin('users', 'entregas.user_id', '=', 'users.id')
+            ->leftJoin('users as evaluadores', 'notas.user_id', '=', 'evaluadores.id')
+            ->leftJoin('rubricas', 'notas.rubrica_id', '=', 'rubricas.id')
+            ->where('notas.id', $nota->id)
+            ->first();
 
             return response()->json([
                 'success' => true,
-                'data' => $responseData,
+                'data' => $notaCompleta,
                 'message' => 'Nota actualizada correctamente'
             ], 200);
 

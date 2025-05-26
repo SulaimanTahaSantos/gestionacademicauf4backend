@@ -456,11 +456,10 @@ class RubricaController extends Controller
                 'total_criterios_eliminados' => $rubrica->criterios->count()
             ];
 
-            // Use relationship to get and delete associated notas
-            $notasAsociadas = $rubrica->notas()->count();
+            $notasAsociadas = Nota::where('rubrica_id', $rubrica->id)->count();
             
             if ($notasAsociadas > 0) {
-                $rubrica->notas()->delete();
+                Nota::where('rubrica_id', $rubrica->id)->delete();
                 $deletedData['notas_eliminadas'] = $notasAsociadas;
             } else {
                 $deletedData['notas_eliminadas'] = 0;
