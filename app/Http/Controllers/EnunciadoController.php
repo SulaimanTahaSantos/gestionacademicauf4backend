@@ -306,4 +306,32 @@ class EnunciadoController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $enunciado = Enunciado::find($id);
+            
+            if (!$enunciado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Enunciado no encontrado'
+                ], 404);
+            }
+
+            $enunciado->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enunciado eliminado exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el enunciado',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
