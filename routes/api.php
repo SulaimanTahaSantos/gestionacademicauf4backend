@@ -8,6 +8,7 @@ use App\Http\Controllers\ModuloController;
 use App\Http\Controllers\NotaController;
 use App\Http\Controllers\EntregaController;
 use App\Http\Controllers\RubricaController;
+use App\Http\Controllers\EnunciadoController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
 use App\Models\User;
@@ -36,6 +37,8 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 // Route::get('/login', function () {
 //     return RetornarMensaje('Login successful');
 // });
+
+// vista clases routes
 Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
 Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
 Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
@@ -73,6 +76,12 @@ Route::get('/rubricas', [RubricaController::class, 'index']);
 Route::post('/rubricas', [RubricaController::class, 'store']);
 Route::put('/rubricas/{id}', [RubricaController::class, 'update']);
 Route::delete('/rubricas/{id}', [RubricaController::class, 'destroy']);
+
+// Vista Enunciados routes
+Route::get('/enunciados', [EnunciadoController::class, 'index']);
+Route::post('/enunciados', [EnunciadoController::class, 'store']);
+Route::put('/enunciados/{id}', [EnunciadoController::class, 'update']);
+Route::delete('/enunciados/{id}', [EnunciadoController::class, 'destroy']);
 
 
 
