@@ -110,12 +110,18 @@ class GrupoController extends Controller
                     }
                 }
 
-               
+                $userId = null;
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $userId = $moduloData['usuario']['id'];
+                }
+
                 $modulo = Modulo::create([
                     'nombre' => $moduloData['nombre'],
                     'codigo' => $moduloData['codigo'],
                     'descripcion' => $moduloData['descripcion'] ?? null,
-                    'cursar_id' => $cursar ? $cursar->id : null
+                    'cursar_id' => $cursar ? $cursar->id : null,
+                    'grupo_id' => $grupo->id,
+                    'user_id' => $userId
                 ]);
 
                 $usuarioData = null;
@@ -167,10 +173,8 @@ class GrupoController extends Controller
     public function updateGrupoCompleto(Request $request, $id)
     {
         try {
-            // Buscar el grupo
             $grupo = Grupo::find($id);
 
-            // Validar los datos de entrada
             $validated = $request->validate([
                 'nombre' => 'required|string|max:255',
                 'user_id' => 'required|exists:users,id',
@@ -183,13 +187,11 @@ class GrupoController extends Controller
                 'modulos.*.usuario.id' => 'nullable|exists:users,id'
             ]);
 
-            // Actualizar el grupo
             $grupo->update([
                 'nombre' => $validated['nombre'],
                 'user_id' => $validated['user_id']
             ]);
 
-            // Obtener módulos existentes del grupo usando relaciones
             $grupo->load(['cursars', 'modulos.cursar']);
             $modulosExistentes = $grupo->modulos;
             $modulosExistentesIds = $modulosExistentes->pluck('id');
@@ -198,7 +200,6 @@ class GrupoController extends Controller
             $modulosEnviados = collect($validated['modulos']);
             $modulosEnviadosIds = $modulosEnviados->pluck('id')->filter();
 
-            // Eliminar módulos que no están en la nueva lista
             $modulosAEliminar = $modulosExistentes->whereNotIn('id', $modulosEnviadosIds);
             foreach ($modulosAEliminar as $modulo) {
                 if ($modulo->cursar_id) {
@@ -242,6 +243,11 @@ class GrupoController extends Controller
                     }
                 }
 
+                $userId = null;
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $userId = $moduloData['usuario']['id'];
+                }
+
                 if (isset($moduloData['id'])) {
                     $modulo = Modulo::find($moduloData['id']);
                     if ($modulo) {
@@ -249,7 +255,9 @@ class GrupoController extends Controller
                             'nombre' => $moduloData['nombre'],
                             'codigo' => $moduloData['codigo'],
                             'descripcion' => $moduloData['descripcion'] ?? null,
-                            'cursar_id' => $cursar ? $cursar->id : null
+                            'cursar_id' => $cursar ? $cursar->id : null,
+                            'grupo_id' => $grupo->id,
+                            'user_id' => $userId
                         ]);
                     }
                 } else {
@@ -257,7 +265,9 @@ class GrupoController extends Controller
                         'nombre' => $moduloData['nombre'],
                         'codigo' => $moduloData['codigo'],
                         'descripcion' => $moduloData['descripcion'] ?? null,
-                        'cursar_id' => $cursar ? $cursar->id : null
+                        'cursar_id' => $cursar ? $cursar->id : null,
+                        'grupo_id' => $grupo->id,
+                        'user_id' => $userId
                     ]);
                 }
 
@@ -316,15 +326,12 @@ class GrupoController extends Controller
     public function deleteGrupoCompleto($id)
     {
         try {
-            // Buscar el grupo y cargar relaciones
             $grupo = Grupo::with(['cursars', 'modulos'])->findOrFail($id);
 
-            // Eliminar módulos usando relaciones
             foreach ($grupo->modulos as $modulo) {
                 $modulo->delete();
             }
 
-            // Eliminar cursars usando relaciones
             foreach ($grupo->cursars as $cursar) {
                 $cursar->delete();
             }
