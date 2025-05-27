@@ -276,7 +276,6 @@ class GrupoController extends Controller
 
                 $usuarioData = null;
                 if ($userId) {
-                    // Load the user directly from the module's user_id
                     $modulo->load('user');
                     if ($modulo->user) {
                         $usuarioData = [
@@ -375,15 +374,10 @@ class GrupoController extends Controller
                 'cursars.usuario' => function($query) {
                     $query->where('rol', 'user');
                 },
-                'modulos' => function($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                },
                 'modulos.cursar.usuario' => function($query) {
                     $query->where('rol', 'user');
                 }
-            ])->whereHas('modulos', function($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })->get();
+            ])->where('user_id', $user->id)->get();
             
             $resultado = $grupos->map(function($grupo) {
                 $modulosConUsuarios = $grupo->modulos->map(function($modulo) {
