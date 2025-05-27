@@ -365,6 +365,146 @@ public function fetchClassesProfesor()
     }
 }
 
+public function storeClaseProfesor(Request $request)
+{
+    try {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255'
+        ]);
+
+        $validated['user_id'] = $user->id; // El profesor autenticado será el propietario
+
+        $clase = Clase::create($validated);
+
+        $clase->load(['user' => function($query) {
+            $query->select('id', 'name', 'surname', 'email', 'rol');
+        }]);
+
+        $responseData = [
+            'clase' => [
+                'id' => $clase->id,
+                'nombre' => $clase->nombre,
+                'created_at' => $clase->created_at,
+                'updated_at' => $clase->updated_at
+            ],
+            'profesor' => $clase->user ? [
+                'id' => $clase->user->id,
+                'name' => $clase->user->name,
+                'surname' => $clase->user->surname,
+                'email' => $clase->user->email,
+                'rol' => $clase->user->rol
+            ] : null
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $responseData,
+            'message' => 'Clase creada correctamente'
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error de validación',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al crear la clase: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function updateClaseProfesor(Request $request, $id)
+{
+    try {
+        $user = auth()->user();
+        $clase = Clase::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255'
+        ]);
+
+        $clase->update($validated);
+
+        $clase->load(['user' => function($query) {
+            $query->select('id', 'name', 'surname', 'email', 'rol');
+        }]);
+
+        $responseData = [
+            'clase' => [
+                'id' => $clase->id,
+                'nombre' => $clase->nombre,
+                'created_at' => $clase->created_at,
+                'updated_at' => $clase->updated_at
+            ],
+            'profesor' => $clase->user ? [
+                'id' => $clase->user->id,
+                'name' => $clase->user->name,
+                'surname' => $clase->user->surname,
+                'email' => $clase->user->email,
+                'rol' => $clase->user->rol
+            ] : null
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $responseData,
+            'message' => 'Clase actualizada correctamente'
+        ], 200);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Clase no encontrada o no tienes permisos para editarla'
+        ], 404);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error de validación',
+            'errors' => $e->errors()
+        ], 422);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al actualizar la clase: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function destroyClaseProfesor($id)
+{
+    try {
+        $user = auth()->user();
+        $clase = Clase::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+        
+        $clase->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Clase eliminada correctamente'
+        ], 200);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Clase no encontrada o no tienes permisos para eliminarla'
+        ], 404);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al eliminar la clase: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
 
 public function fetchUsersGroupsAndClassesProfesor()
 {

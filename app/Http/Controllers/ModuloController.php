@@ -264,6 +264,62 @@ class ModuloController extends Controller
         }
     }
 
+    public function storeProfesor(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            $validated = $request->validate([
+                'codigo' => 'required|string|max:100|unique:modulos,codigo',
+                'nombre' => 'required|string|max:255',
+                'descripcion' => 'nullable|string',
+                'grupo_id' => 'required|exists:grupo,id'
+            ]);
+
+            $validated['user_id'] = $user->id; // El profesor autenticado será el propietario
+
+            $modulo = Modulo::create($validated);
+
+            $modulo->load([
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'user' => function($query) {
+                    $query->select('id', 'name', 'surname', 'rol');
+                }
+            ]);
+
+            $responseData = [
+                'modulo_id' => $modulo->id,
+                'modulo_codigo' => $modulo->codigo,
+                'modulo_nombre' => $modulo->nombre,
+                'modulo_descripcion' => $modulo->descripcion,
+                'grupo_nombre' => $modulo->grupo->nombre,
+                'profesor_name' => $modulo->user->name,
+                'profesor_surname' => $modulo->user->surname,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData,
+                'message' => 'Módulo creado correctamente'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el módulo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function updateProfesor(Request $request, $id)
     {
         try {

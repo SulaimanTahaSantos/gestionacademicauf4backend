@@ -101,12 +101,15 @@ Route::middleware(['isAdmin'])->group(function(){
     // Route::delete('/users/{id}', [UserController::class, 'destroy']);
 });
 
-// Professor Routes - Role-based access control
 Route::middleware(['isProfesor'])->group(function(){
     
     Route::get('/profesor/grupos', [GrupoController::class, 'getGruposProfesor']);
+    Route::post('/profesor/grupos', [GrupoController::class, 'storeProfesor']);
+    Route::put('/profesor/grupos/{id}', [GrupoController::class, 'updateProfesor']);
+    Route::delete('/profesor/grupos/{id}', [GrupoController::class, 'destroyProfesor']);
     
     Route::get('/profesor/modulos', [ModuloController::class, 'getModulosProfesor']);
+    Route::post('/profesor/modulos', [ModuloController::class, 'storeProfesor']);
     Route::put('/profesor/modulos/{id}', [ModuloController::class, 'updateProfesor']);
     Route::delete('/profesor/modulos/{id}', [ModuloController::class, 'destroyProfesor']);
     
@@ -130,6 +133,9 @@ Route::middleware(['isProfesor'])->group(function(){
     Route::delete('/profesor/enunciados/{id}', [EnunciadoController::class, 'destroyPorProfesor']);
     
     Route::get('/profesor/clases', [UserController::class, 'fetchClassesProfesor']);
+    Route::post('/profesor/clases', [UserController::class, 'storeClaseProfesor']);
+    Route::put('/profesor/clases/{id}', [UserController::class, 'updateClaseProfesor']);
+    Route::delete('/profesor/clases/{id}', [UserController::class, 'destroyClaseProfesor']);
     Route::get('/profesor/usuariosGruposClases', [UserController::class, 'fetchUsersGroupsAndClassesProfesor']);
 });
 ?>

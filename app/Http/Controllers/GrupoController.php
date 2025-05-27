@@ -422,4 +422,287 @@ class GrupoController extends Controller
             ], 500);
         }
     }
+
+    public function storeProfesor(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'modulos' => 'required|array|min:1',
+                'modulos.*.nombre' => 'required|string|max:255',
+                'modulos.*.codigo' => 'required|string|max:100',
+                'modulos.*.descripcion' => 'nullable|string',
+                'modulos.*.usuario' => 'nullable|array',
+                'modulos.*.usuario.id' => 'nullable|exists:users,id'
+            ]);
+
+            $grupo = Grupo::create([
+                'nombre' => $validated['nombre'],
+                'user_id' => $user->id // El profesor autenticado será el propietario
+            ]);
+
+            $modulosCreados = [];
+
+            foreach ($validated['modulos'] as $moduloData) {
+                $cursar = null;
+                
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $usuario = User::find($moduloData['usuario']['id']);
+                    
+                    if ($usuario && $usuario->rol === 'user') {
+                        $cursar = Cursar::create([
+                            'nota1' => null,
+                            'nota2' => null,
+                            'nota3' => null,
+                            'notaFinal' => null,
+                            'user_id' => $usuario->id
+                        ]);
+                    }
+                }
+
+                $modulo = Modulo::create([
+                    'nombre' => $moduloData['nombre'],
+                    'codigo' => $moduloData['codigo'],
+                    'descripcion' => $moduloData['descripcion'] ?? null,
+                    'cursar_id' => $cursar ? $cursar->id : null,
+                    'grupo_id' => $grupo->id,
+                    'user_id' => $user->id // El profesor autenticado será el propietario del módulo
+                ]);
+
+                $usuarioData = null;
+                if (isset($moduloData['usuario']) && isset($moduloData['usuario']['id'])) {
+                    $modulo->load('user');
+                    if ($modulo->user) {
+                        $usuarioData = [
+                            'id' => $modulo->user->id,
+                            'nombre' => $modulo->user->name,
+                            'apellido' => $modulo->user->surname,
+                            'email' => $modulo->user->email,
+                            'dni' => $modulo->user->dni
+                        ];
+                    }
+                }
+
+                $modulosCreados[] = [
+                    'id' => $modulo->id,
+                    'nombre' => $modulo->nombre,
+                    'codigo' => $modulo->codigo,
+                    'descripcion' => $modulo->descripcion,
+                    'usuario' => $usuarioData
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Grupo creado exitosamente',
+                'data' => [
+                    'id' => $grupo->id,
+                    'nombre' => $grupo->nombre,
+                    'modulos' => $modulosCreados
+                ]
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el grupo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProfesor(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+            $grupo = Grupo::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'modulos' => 'required|array|min:1',
+                'modulos.*.id' => 'nullable|exists:modulos,id',
+                'modulos.*.nombre' => 'required|string|max:255',
+                'modulos.*.codigo' => 'required|string|max:100',
+                'modulos.*.descripcion' => 'nullable|string',
+                'modulos.*.usuario' => 'nullable|array',
+                'modulos.*.usuario.id' => 'nullable|exists:users,id'
+            ]);
+
+            $grupo->update([
+                'nombre' => $validated['nombre']
+                // user_id no se actualiza, mantiene el profesor original
+            ]);
+
+            $grupo->load(['cursars', 'modulos.cursar']);
+            $modulosExistentes = $grupo->modulos;
+            $modulosExistentesIds = $modulosExistentes->pluck('id');
+
+            $modulosNuevosIds = collect($validated['modulos'])
+                ->whereNotNull('id')
+                ->pluck('id');
+
+            $modulosAEliminar = $modulosExistentesIds->diff($modulosNuevosIds);
+
+            foreach ($modulosAEliminar as $moduloId) {
+                $moduloAEliminar = Modulo::find($moduloId);
+                if ($moduloAEliminar) {
+                    if ($moduloAEliminar->cursar_id) {
+                        $cursar = Cursar::find($moduloAEliminar->cursar_id);
+                        if ($cursar) {
+                            $cursar->delete();
+                        }
+                    }
+                    $moduloAEliminar->delete();
+                }
+            }
+
+            $modulosActualizados = [];
+
+            foreach ($validated['modulos'] as $moduloData) {
+                $userId = $moduloData['usuario']['id'] ?? null;
+                $cursar = null;
+
+                if ($userId) {
+                    $usuario = User::find($userId);
+                    if ($usuario && $usuario->rol === 'user') {
+                        $cursar = Cursar::create([
+                            'nota1' => null,
+                            'nota2' => null,
+                            'nota3' => null,
+                            'notaFinal' => null,
+                            'user_id' => $userId
+                        ]);
+                    }
+                }
+
+                if (isset($moduloData['id'])) {
+                    $modulo = Modulo::where('id', $moduloData['id'])
+                                  ->where('user_id', $user->id)
+                                  ->firstOrFail();
+                    
+                    if ($modulo->cursar_id) {
+                        $cursarAnterior = Cursar::find($modulo->cursar_id);
+                        if ($cursarAnterior) {
+                            $cursarAnterior->delete();
+                        }
+                    }
+
+                    $modulo->update([
+                        'nombre' => $moduloData['nombre'],
+                        'codigo' => $moduloData['codigo'],
+                        'descripcion' => $moduloData['descripcion'] ?? null,
+                        'cursar_id' => $cursar ? $cursar->id : null
+                        // user_id no se actualiza, mantiene el profesor original
+                    ]);
+                } else {
+                    $modulo = Modulo::create([
+                        'nombre' => $moduloData['nombre'],
+                        'codigo' => $moduloData['codigo'],
+                        'descripcion' => $moduloData['descripcion'] ?? null,
+                        'cursar_id' => $cursar ? $cursar->id : null,
+                        'grupo_id' => $grupo->id,
+                        'user_id' => $user->id
+                    ]);
+                }
+
+                $usuarioData = null;
+                if ($userId) {
+                    $modulo->load('user');
+                    if ($modulo->user) {
+                        $usuarioData = [
+                            'id' => $modulo->user->id,
+                            'nombre' => $modulo->user->name,
+                            'apellido' => $modulo->user->surname,
+                            'email' => $modulo->user->email,
+                            'dni' => $modulo->user->dni
+                        ];
+                    }
+                }
+
+                $modulosActualizados[] = [
+                    'id' => $modulo->id,
+                    'nombre' => $modulo->nombre,
+                    'codigo' => $modulo->codigo,
+                    'descripcion' => $modulo->descripcion,
+                    'usuario' => $usuarioData
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Grupo actualizado exitosamente',
+                'data' => [
+                    'id' => $grupo->id,
+                    'nombre' => $grupo->nombre,
+                    'modulos' => $modulosActualizados
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grupo no encontrado o no tienes permisos para editarlo'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el grupo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyProfesor($id)
+    {
+        try {
+            $user = auth()->user();
+            $grupo = Grupo::with(['cursars', 'modulos'])
+                         ->where('id', $id)
+                         ->where('user_id', $user->id)
+                         ->firstOrFail();
+
+            foreach ($grupo->modulos as $modulo) {
+                $modulo->delete();
+            }
+
+            foreach ($grupo->cursars as $cursar) {
+                $cursar->delete();
+            }
+
+            $grupoNombre = $grupo->nombre;
+            $grupo->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Grupo '{$grupoNombre}' eliminado exitosamente junto con todos sus módulos y relaciones"
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grupo no encontrado o no tienes permisos para eliminarlo'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el grupo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
