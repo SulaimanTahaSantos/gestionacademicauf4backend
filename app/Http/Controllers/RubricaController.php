@@ -483,4 +483,210 @@ class RubricaController extends Controller
             ], 500);
         }
     }
+
+    public function indexProfesor()
+    {
+        try {
+            $user = auth()->user();
+            
+            $rubricas = Rubrica::with([
+                'practica.profesor',
+                'evaluador',
+                'notas'
+            ])->whereHas('practica', function($query) use ($user) {
+                $query->where('profesor_id', $user->id);
+            })->get();
+
+            $rubricasData = $rubricas->map(function ($rubrica) {
+                return [
+                    'id' => $rubrica->id,
+                    'nombre' => $rubrica->nombre,
+                    'documento' => $rubrica->documento,
+                    'practica_titulo' => $rubrica->practica->titulo ?? null,
+                    'practica_descripcion' => $rubrica->practica->descripcion ?? null,
+                    'profesor_name' => $rubrica->practica->profesor->name ?? null,
+                    'profesor_surname' => $rubrica->practica->profesor->surname ?? null,
+                    'evaluador_name' => $rubrica->evaluador->name ?? null,
+                    'evaluador_surname' => $rubrica->evaluador->surname ?? null,
+                    'total_notas' => $rubrica->notas->count(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $rubricasData,
+                'message' => 'Rúbricas obtenidas correctamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener las rúbricas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeProfesor(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'practica_id' => 'required|exists:practicas,id',
+                'documento' => 'nullable|string',
+                'evaluador_id' => 'required|exists:users,id'
+            ]);
+
+            // Verificar que la práctica pertenece al profesor
+            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+                ->where('profesor_id', $user->id)
+                ->firstOrFail();
+
+            $rubrica = Rubrica::create($validated);
+
+            $rubrica->load([
+                'practica.profesor',
+                'evaluador',
+                'notas'
+            ]);
+
+            $responseData = [
+                'id' => $rubrica->id,
+                'nombre' => $rubrica->nombre,
+                'documento' => $rubrica->documento,
+                'practica_titulo' => $rubrica->practica->titulo,
+                'profesor_name' => $rubrica->practica->profesor->name,
+                'profesor_surname' => $rubrica->practica->profesor->surname,
+                'evaluador_name' => $rubrica->evaluador->name,
+                'evaluador_surname' => $rubrica->evaluador->surname,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData,
+                'message' => 'Rúbrica creada correctamente'
+            ], 201);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Práctica no encontrada o no tienes permisos'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la rúbrica: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProfesor(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+            
+            $rubrica = Rubrica::with('practica')
+                ->whereHas('practica', function($query) use ($user) {
+                    $query->where('profesor_id', $user->id);
+                })
+                ->findOrFail($id);
+
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'practica_id' => 'required|exists:practicas,id',
+                'documento' => 'nullable|string',
+                'evaluador_id' => 'required|exists:users,id'
+            ]);
+
+            // Verificar que la nueva práctica también pertenece al profesor
+            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+                ->where('profesor_id', $user->id)
+                ->firstOrFail();
+
+            $rubrica->update($validated);
+
+            $rubrica->load([
+                'practica.profesor',
+                'evaluador',
+                'notas'
+            ]);
+
+            $responseData = [
+                'id' => $rubrica->id,
+                'nombre' => $rubrica->nombre,
+                'documento' => $rubrica->documento,
+                'practica_titulo' => $rubrica->practica->titulo,
+                'profesor_name' => $rubrica->practica->profesor->name,
+                'profesor_surname' => $rubrica->practica->profesor->surname,
+                'evaluador_name' => $rubrica->evaluador->name,
+                'evaluador_surname' => $rubrica->evaluador->surname,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData,
+                'message' => 'Rúbrica actualizada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rúbrica no encontrada o no tienes permisos para editarla'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la rúbrica: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyProfesor($id)
+    {
+        try {
+            $user = auth()->user();
+            
+            $rubrica = Rubrica::with('practica')
+                ->whereHas('practica', function($query) use ($user) {
+                    $query->where('profesor_id', $user->id);
+                })
+                ->findOrFail($id);
+            
+            $rubrica->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rúbrica eliminada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rúbrica no encontrada o no tienes permisos para eliminarla'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la rúbrica: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

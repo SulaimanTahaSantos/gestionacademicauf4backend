@@ -305,6 +305,122 @@ public function updateUserSettingsPassword(Request $request)
     $user->save();
 
     return response()->json(['message' => 'User password updated successfully'], 200);
-
 }
+
+
+public function fetchClassesProfesor()
+{
+    try {
+        $user = Auth::user();
+        
+        if (!$user || $user->rol !== 'profesor') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acceso denegado. Solo profesores pueden acceder a esta funcionalidad.'
+            ], 403);
+        }
+
+        $clases = Clase::where('user_id', $user->id)
+            ->with(['user' => function($query) {
+                $query->select('id', 'name', 'surname', 'email', 'rol');
+            }])
+            ->get();
+
+        $clasesData = $clases->map(function ($clase) {
+            return [
+                'clase' => [
+                    'id' => $clase->id,
+                    'nombre' => $clase->nombre,
+                    'created_at' => $clase->created_at,
+                    'updated_at' => $clase->updated_at
+                ],
+                'profesor' => $clase->user ? [
+                    'id' => $clase->user->id,
+                    'name' => $clase->user->name,
+                    'surname' => $clase->user->surname,
+                    'email' => $clase->user->email,
+                    'rol' => $clase->user->rol
+                ] : null
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Clases del profesor obtenidas exitosamente',
+            'data' => $clasesData,
+            'total' => $clasesData->count(),
+            'profesor' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'surname' => $user->surname
+            ]
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al obtener las clases del profesor',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+public function fetchUsersGroupsAndClassesProfesor()
+{
+    try {
+        $user = Auth::user();
+        
+        // Verificar que el usuario esté autenticado y sea profesor
+        if (!$user || $user->rol !== 'profesor') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Acceso denegado. Solo profesores pueden acceder a esta funcionalidad.'
+            ], 403);
+        }
+
+        // Obtener información del profesor con sus relaciones
+        $profesor = User::where('id', $user->id)
+            ->with(['grupo', 'clase'])
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Información del profesor obtenida exitosamente',
+            'data' => [
+                'usuario' => [
+                    'id' => $profesor->id,
+                    'name' => $profesor->name,
+                    'surname' => $profesor->surname,
+                    'email' => $profesor->email,
+                    'dni' => $profesor->dni,
+                    'rol' => $profesor->rol,
+                    'url' => $profesor->url,
+                    'created_at' => $profesor->created_at,
+                    'updated_at' => $profesor->updated_at
+                ],
+                'grupo' => $profesor->grupo ? [
+                    'id' => $profesor->grupo->id,
+                    'nombre' => $profesor->grupo->nombre,
+                    'created_at' => $profesor->grupo->created_at,
+                    'updated_at' => $profesor->grupo->updated_at
+                ] : null,
+                'clase' => $profesor->clase ? [
+                    'id' => $profesor->clase->id,
+                    'nombre' => $profesor->clase->nombre,
+                    'created_at' => $profesor->clase->created_at,
+                    'updated_at' => $profesor->clase->updated_at
+                ] : null
+            ]
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al obtener la información del profesor',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
 }

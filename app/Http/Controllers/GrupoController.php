@@ -365,4 +365,67 @@ class GrupoController extends Controller
             ], 500);
         }
     }
+
+    public function getGruposProfesor()
+    {
+        try {
+            $user = auth()->user();
+            
+            $grupos = Grupo::with([
+                'cursars.usuario' => function($query) {
+                    $query->where('rol', 'user');
+                },
+                'modulos' => function($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                },
+                'modulos.cursar.usuario' => function($query) {
+                    $query->where('rol', 'user');
+                }
+            ])->whereHas('modulos', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })->get();
+            
+            $resultado = $grupos->map(function($grupo) {
+                $modulosConUsuarios = $grupo->modulos->map(function($modulo) {
+                    $usuario = null;
+                    
+                    if ($modulo->cursar && $modulo->cursar->usuario && $modulo->cursar->usuario->rol === 'user') {
+                        $usuario = [
+                            'id' => $modulo->cursar->usuario->id,
+                            'nombre' => $modulo->cursar->usuario->name,
+                            'apellido' => $modulo->cursar->usuario->surname,
+                            'email' => $modulo->cursar->usuario->email,
+                            'dni' => $modulo->cursar->usuario->dni
+                        ];
+                    }
+
+                    return [
+                        'id' => $modulo->id,
+                        'nombre' => $modulo->nombre,
+                        'codigo' => $modulo->codigo,
+                        'descripcion' => $modulo->descripcion,
+                        'usuario' => $usuario
+                    ];
+                });
+
+                return [
+                    'id' => $grupo->id,
+                    'nombre' => $grupo->nombre,
+                    'modulos' => $modulosConUsuarios
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $resultado,
+                'message' => 'Grupos obtenidos correctamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los grupos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

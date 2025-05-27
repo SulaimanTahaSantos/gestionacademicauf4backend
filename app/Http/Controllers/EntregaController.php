@@ -347,4 +347,154 @@ class EntregaController extends Controller
             ], 500);
         }
     }
+
+    public function getEntregasProfesor()
+    {
+        try {
+            $user = auth()->user();
+            
+            $entregas = Entrega::with([
+                'practica.profesor',
+                'nota.evaluador',
+                'nota.rubrica',
+                'alumno'
+            ])->whereHas('practica', function($query) use ($user) {
+                $query->where('profesor_id', $user->id);
+            })->get();
+
+            $entregasData = $entregas->map(function ($entrega) {
+                return [
+                    'entrega_id' => $entrega->id,
+                    'archivo' => $entrega->archivo,
+                    'fecha_entrega' => $entrega->fecha_entrega,
+                    'practica_titulo' => $entrega->practica->titulo ?? null,
+                    'practica_descripcion' => $entrega->practica->descripcion ?? null,
+                    'profesor_name' => $entrega->practica->profesor->name ?? null,
+                    'profesor_surname' => $entrega->practica->profesor->surname ?? null,
+                    'alumno_name' => $entrega->alumno->name ?? null,
+                    'alumno_surname' => $entrega->alumno->surname ?? null,
+                    'alumno_email' => $entrega->alumno->email ?? null,
+                    'nota_final' => $entrega->nota->nota_final ?? null,
+                    'comentario' => $entrega->nota->comentario ?? null,
+                    'evaluador_name' => $entrega->nota->evaluador->name ?? null,
+                    'evaluador_surname' => $entrega->nota->evaluador->surname ?? null,
+                    'rubrica_nombre' => $entrega->nota->rubrica->nombre ?? null,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $entregasData,
+                'message' => 'Entregas obtenidas correctamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener las entregas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProfesor(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+            
+            $entrega = Entrega::with('practica')
+                ->whereHas('practica', function($query) use ($user) {
+                    $query->where('profesor_id', $user->id);
+                })
+                ->findOrFail($id);
+
+            $validated = $request->validate([
+                'practica_id' => 'required|exists:practicas,id',
+                'user_id' => 'required|exists:users,id',
+                'fecha_entrega' => 'required|date',
+                'archivo' => 'nullable|string'
+            ]);
+
+            // Verificar que la práctica pertenece al profesor
+            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+                ->where('profesor_id', $user->id)
+                ->firstOrFail();
+
+            $entrega->update($validated);
+
+            $entrega->load([
+                'practica.profesor',
+                'nota.evaluador',
+                'nota.rubrica',
+                'alumno'
+            ]);
+
+            $responseData = [
+                'entrega_id' => $entrega->id,
+                'archivo' => $entrega->archivo,
+                'fecha_entrega' => $entrega->fecha_entrega,
+                'practica_titulo' => $entrega->practica->titulo,
+                'profesor_name' => $entrega->practica->profesor->name,
+                'profesor_surname' => $entrega->practica->profesor->surname,
+                'alumno_name' => $entrega->alumno->name,
+                'alumno_surname' => $entrega->alumno->surname,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData,
+                'message' => 'Entrega actualizada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega no encontrada o no tienes permisos para editarla'
+            ], 404);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la entrega: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyProfesor($id)
+    {
+        try {
+            $user = auth()->user();
+            
+            $entrega = Entrega::with('practica')
+                ->whereHas('practica', function($query) use ($user) {
+                    $query->where('profesor_id', $user->id);
+                })
+                ->findOrFail($id);
+            
+            $entrega->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Entrega eliminada correctamente'
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Entrega no encontrada o no tienes permisos para eliminarla'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la entrega: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

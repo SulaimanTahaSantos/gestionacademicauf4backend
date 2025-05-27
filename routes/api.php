@@ -11,9 +11,10 @@ use App\Http\Controllers\RubricaController;
 use App\Http\Controllers\EnunciadoController;
 use App\Http\Middleware\IsUserAuth;
 use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\IsProfesor;
 use App\Models\User;
 use App\Models\Grupo;
-use App\Models\Clase;
+use App\Models\Clase;  
 use App\Models\Modulo;
 use App\Models\Cursar;
 
@@ -86,17 +87,55 @@ Route::delete('/enunciados/{id}', [EnunciadoController::class, 'destroy']);
 
 
 // Protected Routes
-Route::middleware([IsUserAuth::class])->group(function(){
+Route::middleware(['isUserAuth'])->group(function(){
     Route::post('/logout', [UserController::class, 'logout']);
     Route::get('/me', [UserController::class, 'getUser']);
 });
 
 // Admin Routes
 
-Route::middleware([IsAdmin::class])->group(function(){
+Route::middleware(['isAdmin'])->group(function(){
     Route::get('/users/{id}', [UserController::class, 'show']);
     // Route::post('/users', [UserController::class, 'store']);
     // Route::put('/users/{id}', [UserController::class, 'update']);
     // Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
+// Professor Routes - Role-based access control
+Route::middleware(['isProfesor'])->group(function(){
+    // Grupos - Professor specific
+    Route::get('/profesor/grupos', [GrupoController::class, 'getGruposProfesor']);
+    
+    // Módulos - Professor specific
+    Route::get('/profesor/modulos', [ModuloController::class, 'getModulosProfesor']);
+    Route::put('/profesor/modulos/{id}', [ModuloController::class, 'updateProfesor']);
+    Route::delete('/profesor/modulos/{id}', [ModuloController::class, 'destroyProfesor']);
+    
+    // Entregas - Professor specific
+    Route::get('/profesor/entregas', [EntregaController::class, 'getEntregasProfesor']);
+    Route::put('/profesor/entregas/{id}', [EntregaController::class, 'updateProfesor']);
+    Route::delete('/profesor/entregas/{id}', [EntregaController::class, 'destroyProfesor']);
+    
+    // Notas - Professor specific
+    Route::get('/profesor/notas', [NotaController::class, 'getNotasProfesor']);
+    Route::post('/profesor/notas', [NotaController::class, 'storeProfesor']);
+    Route::put('/profesor/notas/{id}', [NotaController::class, 'updateProfesor']);
+    Route::delete('/profesor/notas/{id}', [NotaController::class, 'destroyProfesor']);
+    
+    // Rubricas - Professor specific
+    Route::get('/profesor/rubricas', [RubricaController::class, 'indexProfesor']);
+    Route::post('/profesor/rubricas', [RubricaController::class, 'storeProfesor']);
+    Route::put('/profesor/rubricas/{id}', [RubricaController::class, 'updateProfesor']);
+    Route::delete('/profesor/rubricas/{id}', [RubricaController::class, 'destroyProfesor']);
+    
+    // Enunciados - Professor specific
+    Route::get('/profesor/enunciados', [EnunciadoController::class, 'indexPorProfesor']);
+    Route::post('/profesor/enunciados', [EnunciadoController::class, 'storePorProfesor']);
+    Route::put('/profesor/enunciados/{id}', [EnunciadoController::class, 'updatePorProfesor']);
+    Route::delete('/profesor/enunciados/{id}', [EnunciadoController::class, 'destroyPorProfesor']);
+    
+    // Clases - Professor specific
+    Route::get('/profesor/clases', [UserController::class, 'fetchClassesProfesor']);
+    Route::get('/profesor/usuariosGruposClases', [UserController::class, 'fetchUsersGroupsAndClassesProfesor']);
 });
 ?>

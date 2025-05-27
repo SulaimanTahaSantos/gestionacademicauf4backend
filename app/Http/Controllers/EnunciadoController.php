@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Enunciado;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class EnunciadoController extends Controller
 {
@@ -316,6 +317,340 @@ class EnunciadoController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Enunciado no encontrado'
+                ], 404);
+            }
+
+            $enunciado->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enunciado eliminado exitosamente'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el enunciado',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function indexPorProfesor()
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->rol !== 'profesor') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado'
+                ], 403);
+            }
+
+            $enunciados = Enunciado::with([
+                'practica' => function($query) {
+                    $query->select('id', 'titulo', 'nombre_practica', 'identificador');
+                },
+                'modulo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'profesor' => function($query) {
+                    $query->select('id', 'name', 'rol')->where('rol', 'profesor');
+                },
+                'rubrica' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                }
+            ])->where('user_id', $user->id)->get();
+
+            $enunciadosData = $enunciados->map(function ($enunciado) {
+                return [
+                    'enunciado' => [
+                        'id' => $enunciado->id,
+                        'descripcion' => $enunciado->descripcion,
+                        'fecha_limite' => $enunciado->fecha_limite,
+                        'created_at' => $enunciado->created_at,
+                        'updated_at' => $enunciado->updated_at
+                    ],
+                    'practica' => $enunciado->practica ? [
+                        'id' => $enunciado->practica->id,
+                        'titulo' => $enunciado->practica->titulo,
+                        'nombre' => $enunciado->practica->nombre_practica,
+                        'identificador' => $enunciado->practica->identificador
+                    ] : null,
+                    'modulo' => $enunciado->modulo ? [
+                        'id' => $enunciado->modulo->id,
+                        'nombre' => $enunciado->modulo->nombre
+                    ] : null,
+                    'profesor' => $enunciado->profesor ? [
+                        'id' => $enunciado->profesor->id,
+                        'name' => $enunciado->profesor->name,
+                        'rol' => $enunciado->profesor->rol
+                    ] : null,
+                    'rubrica' => $enunciado->rubrica ? [
+                        'id' => $enunciado->rubrica->id,
+                        'nombre' => $enunciado->rubrica->nombre
+                    ] : null,
+                    'grupo' => $enunciado->grupo ? [
+                        'id' => $enunciado->grupo->id,
+                        'nombre' => $enunciado->grupo->nombre
+                    ] : null
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enunciados del profesor obtenidos exitosamente',
+                'data' => $enunciadosData,
+                'total' => $enunciadosData->count()
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los enunciados del profesor',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function storePorProfesor(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->rol !== 'profesor') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado'
+                ], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'descripcion' => 'required|string',
+                'practica_id' => 'nullable|exists:practicas,id',
+                'modulo_id' => 'nullable|exists:modulos,id',
+                'fecha_limite' => 'nullable|date',
+                'rubrica_id' => 'nullable|exists:rubricas,id',
+                'grupo_id' => 'nullable|exists:grupo,id'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos de entrada inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $enunciado = Enunciado::create([
+                'descripcion' => $request->descripcion,
+                'practica_id' => $request->practica_id,
+                'modulo_id' => $request->modulo_id,
+                'user_id' => $user->id,
+                'fecha_limite' => $request->fecha_limite,
+                'rubrica_id' => $request->rubrica_id,
+                'grupo_id' => $request->grupo_id
+            ]);
+
+            $enunciado->load([
+                'practica' => function($query) {
+                    $query->select('id', 'titulo', 'nombre_practica', 'identificador');
+                },
+                'modulo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'profesor' => function($query) {
+                    $query->select('id', 'name', 'rol');
+                },
+                'rubrica' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                }
+            ]);
+
+            $responseData = [
+                'enunciado' => [
+                    'id' => $enunciado->id,
+                    'descripcion' => $enunciado->descripcion,
+                    'fecha_limite' => $enunciado->fecha_limite,
+                    'created_at' => $enunciado->created_at,
+                    'updated_at' => $enunciado->updated_at
+                ],
+                'practica' => $enunciado->practica ? [
+                    'id' => $enunciado->practica->id,
+                    'titulo' => $enunciado->practica->titulo,
+                    'nombre' => $enunciado->practica->nombre_practica,
+                    'identificador' => $enunciado->practica->identificador
+                ] : null,
+                'modulo' => $enunciado->modulo ? [
+                    'id' => $enunciado->modulo->id,
+                    'nombre' => $enunciado->modulo->nombre
+                ] : null,
+                'profesor' => $enunciado->profesor ? [
+                    'id' => $enunciado->profesor->id,
+                    'name' => $enunciado->profesor->name,
+                    'rol' => $enunciado->profesor->rol
+                ] : null,
+                'rubrica' => $enunciado->rubrica ? [
+                    'id' => $enunciado->rubrica->id,
+                    'nombre' => $enunciado->rubrica->nombre
+                ] : null,
+                'grupo' => $enunciado->grupo ? [
+                    'id' => $enunciado->grupo->id,
+                    'nombre' => $enunciado->grupo->nombre
+                ] : null
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enunciado creado exitosamente',
+                'data' => $responseData
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el enunciado',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+   
+    public function updatePorProfesor(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->rol !== 'profesor') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado'
+                ], 403);
+            }
+
+            $enunciado = Enunciado::find($id);
+            if (!$enunciado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Enunciado no encontrado'
+                ], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'descripcion' => 'sometimes|required|string',
+                'practica_id' => 'sometimes|nullable|exists:practicas,id',
+                'modulo_id' => 'sometimes|nullable|exists:modulos,id',
+                'fecha_limite' => 'sometimes|nullable|date',
+                'rubrica_id' => 'sometimes|nullable|exists:rubricas,id',
+                'grupo_id' => 'sometimes|nullable|exists:grupo,id'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos de entrada inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $updateData = [];
+            if ($request->has('descripcion')) $updateData['descripcion'] = $request->descripcion;
+            if ($request->has('practica_id')) $updateData['practica_id'] = $request->practica_id;
+            if ($request->has('modulo_id')) $updateData['modulo_id'] = $request->modulo_id;
+            if ($request->has('fecha_limite')) $updateData['fecha_limite'] = $request->fecha_limite;
+            if ($request->has('rubrica_id')) $updateData['rubrica_id'] = $request->rubrica_id;
+            if ($request->has('grupo_id')) $updateData['grupo_id'] = $request->grupo_id;
+
+            $enunciado->update($updateData);
+
+            $enunciado->load([
+                'practica' => function($query) {
+                    $query->select('id', 'titulo', 'nombre_practica', 'identificador');
+                },
+                'modulo' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'profesor' => function($query) {
+                    $query->select('id', 'name', 'rol');
+                },
+                'rubrica' => function($query) {
+                    $query->select('id', 'nombre');
+                },
+                'grupo' => function($query) {
+                    $query->select('id', 'nombre');
+                }
+            ]);
+
+            $responseData = [
+                'enunciado' => [
+                    'id' => $enunciado->id,
+                    'descripcion' => $enunciado->descripcion,
+                    'fecha_limite' => $enunciado->fecha_limite,
+                    'created_at' => $enunciado->created_at,
+                    'updated_at' => $enunciado->updated_at
+                ],
+                'practica' => $enunciado->practica ? [
+                    'id' => $enunciado->practica->id,
+                    'titulo' => $enunciado->practica->titulo,
+                    'nombre' => $enunciado->practica->nombre_practica,
+                    'identificador' => $enunciado->practica->identificador
+                ] : null,
+                'modulo' => $enunciado->modulo ? [
+                    'id' => $enunciado->modulo->id,
+                    'nombre' => $enunciado->modulo->nombre
+                ] : null,
+                'profesor' => $enunciado->profesor ? [
+                    'id' => $enunciado->profesor->id,
+                    'name' => $enunciado->profesor->name,
+                    'rol' => $enunciado->profesor->rol
+                ] : null,
+                'rubrica' => $enunciado->rubrica ? [
+                    'id' => $enunciado->rubrica->id,
+                    'nombre' => $enunciado->rubrica->nombre
+                ] : null,
+                'grupo' => $enunciado->grupo ? [
+                    'id' => $enunciado->grupo->id,
+                    'nombre' => $enunciado->grupo->nombre
+                ] : null
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enunciado actualizado exitosamente',
+                'data' => $responseData
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el enunciado',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyPorProfesor($id)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user || $user->rol !== 'profesor') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado'
+                ], 403);
+            }
+
+            $enunciado = Enunciado::where('id', $id)->where('user_id', $user->id)->first();
+            
+            if (!$enunciado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Enunciado no encontrado o no tienes permisos para eliminarlo'
                 ], 404);
             }
 
