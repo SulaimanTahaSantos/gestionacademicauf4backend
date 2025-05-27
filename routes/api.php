@@ -28,11 +28,11 @@ function RetornarMensaje($mensaje){
 }
 
  // public routes 
-Route::get('/users', [UserController::class, 'index']);
-Route::get('/users/{id}', [UserController::class, 'show']);
-Route::post('/users', [UserController::class, 'store']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
+// Route::get('/users', [UserController::class, 'index']);
+// Route::get('/users/{id}', [UserController::class, 'show']);
+// Route::post('/users', [UserController::class, 'store']);
+// Route::put('/users/{id}', [UserController::class, 'update']);
+// Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::post('/registro', [UserController::class, 'register']);
 Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 // Route::get('/login', function () {
@@ -40,49 +40,7 @@ Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
 // });
 
 // vista clases routes
-Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
-Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
-Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
-Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'deleteUserAndGroupsAndClasses']);
-// vista configuracion routes
 
-Route::put('/updateUserSettings',[UserController::class, 'updateUserSettings']);
-Route::put('/updateUserSettingsPassword',[UserController::class, 'updateUserSettingsPassword']);
-
-// Vista grupos routes
-Route::get('/grupos', [GrupoController::class, 'getGrupos']);
-Route::post('/grupos', [GrupoController::class, 'insertGrupoCompleto']);
-Route::put('/grupos/{id}', [GrupoController::class, 'updateGrupoCompleto']);
-Route::delete('/grupos/{id}', [GrupoController::class, 'deleteGrupoCompleto']);
-
-// Vista módulos routes
-Route::get('/modulos', [ModuloController::class, 'getModulos']);
-Route::post('/modulos', [ModuloController::class, 'store']);
-Route::put('/modulos/{id}', [ModuloController::class, 'update']);
-Route::delete('/modulos/{id}', [ModuloController::class, 'destroy']);
-// Vista Notas routes
-Route::get('/getNotas', [NotaController::class, 'getNotas']);
-Route::post('/notas', [NotaController::class, 'store']);
-Route::put('/notas/{id}', [NotaController::class, 'update']);
-Route::delete('/notas/{id}', [NotaController::class, 'destroy']);
-
-// Vista Entregas routes
-Route::get('/entregas', [EntregaController::class, 'getEntregas']);
-Route::post('/entregas', [EntregaController::class, 'store']);
-Route::put('/entregas/{id}', [EntregaController::class, 'update']);
-Route::delete('/entregas/{id}', [EntregaController::class, 'destroy']);
-
-// Vista Rubricas routes
-Route::get('/rubricas', [RubricaController::class, 'index']);
-Route::post('/rubricas', [RubricaController::class, 'store']);
-Route::put('/rubricas/{id}', [RubricaController::class, 'update']);
-Route::delete('/rubricas/{id}', [RubricaController::class, 'destroy']);
-
-// Vista Enunciados routes
-Route::get('/enunciados', [EnunciadoController::class, 'index']);
-Route::post('/enunciados', [EnunciadoController::class, 'store']);
-Route::put('/enunciados/{id}', [EnunciadoController::class, 'update']);
-Route::delete('/enunciados/{id}', [EnunciadoController::class, 'destroy']);
 
 
 
@@ -90,6 +48,18 @@ Route::delete('/enunciados/{id}', [EnunciadoController::class, 'destroy']);
 Route::middleware(['isUserAuth'])->group(function(){
     Route::post('/logout', [UserController::class, 'logout']);
     Route::get('/me', [UserController::class, 'getUser']);
+    Route::put('/updateUserSettings',[UserController::class, 'updateUserSettings']);
+    Route::put('/updateUserSettingsPassword',[UserController::class, 'updateUserSettingsPassword']);
+    Route::get('/entregas', [EntregaController::class, 'getEntregas']);
+    Route::post('/entregas', [EntregaController::class, 'store']);
+    Route::get('/enunciados', [EnunciadoController::class, 'index']);
+    Route::get('/grupos', [GrupoController::class, 'getGrupos']);
+    Route::get('/modulos', [ModuloController::class, 'getModulos']);
+    Route::get('/getNotas', [NotaController::class, 'getNotas']);
+    Route::get('/rubricas', [RubricaController::class, 'index']);
+    Route::get('/enunciados', [EnunciadoController::class, 'index']);
+    Route::get('/fetchUsersAndGroupsAndClasses', [UserController::class, 'fetchUsersAndGroupsAndClasses']);
+
 });
 
 // Admin Routes
@@ -99,6 +69,40 @@ Route::middleware(['isAdmin'])->group(function(){
     // Route::post('/users', [UserController::class, 'store']);
     // Route::put('/users/{id}', [UserController::class, 'update']);
     // Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
+Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
+Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'deleteUserAndGroupsAndClasses']);
+// vista configuracion routes
+
+
+
+// Vista grupos routes
+Route::post('/grupos', [GrupoController::class, 'insertGrupoCompleto']);
+Route::put('/grupos/{id}', [GrupoController::class, 'updateGrupoCompleto']);
+Route::delete('/grupos/{id}', [GrupoController::class, 'deleteGrupoCompleto']);
+
+// Vista módulos routes
+Route::post('/modulos', [ModuloController::class, 'store']);
+Route::put('/modulos/{id}', [ModuloController::class, 'update']);
+Route::delete('/modulos/{id}', [ModuloController::class, 'destroy']);
+// Vista Notas routes
+Route::post('/notas', [NotaController::class, 'store']);
+Route::put('/notas/{id}', [NotaController::class, 'update']);
+Route::delete('/notas/{id}', [NotaController::class, 'destroy']);
+
+// Vista Entregas routes
+Route::put('/entregas/{id}', [EntregaController::class, 'update']);
+Route::delete('/entregas/{id}', [EntregaController::class, 'destroy']);
+
+// Vista Rubricas routes
+Route::post('/rubricas', [RubricaController::class, 'store']);
+Route::put('/rubricas/{id}', [RubricaController::class, 'update']);
+Route::delete('/rubricas/{id}', [RubricaController::class, 'destroy']);
+
+// Vista Enunciados routes
+Route::post('/enunciados', [EnunciadoController::class, 'store']);
+Route::put('/enunciados/{id}', [EnunciadoController::class, 'update']);
+Route::delete('/enunciados/{id}', [EnunciadoController::class, 'destroy']);
 });
 
 Route::middleware(['isProfesor'])->group(function(){
