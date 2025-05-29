@@ -371,12 +371,22 @@ public function storeClaseProfesor(Request $request)
         $user = auth()->user();
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'grupo.nombre' => 'nullable|string|max:255'
         ]);
 
-        $validated['user_id'] = $user->id; // El profesor autenticado será el propietario
+        $clase = Clase::create([
+            'nombre' => $validated['nombre'],
+            'user_id' => $user->id
+        ]);
 
-        $clase = Clase::create($validated);
+        $grupo = null;
+        if (!empty($validated['grupo']['nombre'])) {
+            $grupo = Grupo::create([
+                'nombre' => $validated['grupo']['nombre'],
+                'user_id' => $user->id
+            ]);
+        }
 
         $clase->load(['user' => function($query) {
             $query->select('id', 'name', 'surname', 'email', 'rol');
@@ -395,13 +405,24 @@ public function storeClaseProfesor(Request $request)
                 'surname' => $clase->user->surname,
                 'email' => $clase->user->email,
                 'rol' => $clase->user->rol
+            ] : null,
+            'grupo' => $grupo ? [
+                'id' => $grupo->id,
+                'nombre' => $grupo->nombre,
+                'created_at' => $grupo->created_at,
+                'updated_at' => $grupo->updated_at
             ] : null
         ];
+
+        $message = 'Clase creada correctamente';
+        if ($grupo) {
+            $message = 'Clase y grupo creados correctamente';
+        }
 
         return response()->json([
             'success' => true,
             'data' => $responseData,
-            'message' => 'Clase creada correctamente'
+            'message' => $message
         ], 201);
 
     } catch (\Illuminate\Validation\ValidationException $e) {
@@ -414,7 +435,7 @@ public function storeClaseProfesor(Request $request)
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => 'Error al crear la clase: ' . $e->getMessage()
+            'message' => 'Error al crear los recursos: ' . $e->getMessage()
         ], 500);
     }
 }
@@ -426,10 +447,36 @@ public function updateClaseProfesor(Request $request, $id)
         $clase = Clase::where('id', $id)->where('user_id', $user->id)->firstOrFail();
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'grupo.id' => 'nullable|integer|exists:grupos,id',
+            'grupo.nombre' => 'nullable|string|max:255'
         ]);
 
-        $clase->update($validated);
+        $clase->update(['nombre' => $validated['nombre']]);
+
+        $grupo = null;
+        $grupoAction = '';
+
+        // Gestionar grupo si se proporciona
+        if (!empty($validated['grupo'])) {
+            if (!empty($validated['grupo']['id'])) {
+                // Actualizar grupo existente
+                $grupo = Grupo::where('id', $validated['grupo']['id'])
+                             ->where('user_id', $user->id)
+                             ->first();
+                
+                if ($grupo && !empty($validated['grupo']['nombre'])) {
+                    $grupo->update(['nombre' => $validated['grupo']['nombre']]);
+                    $grupoAction = ' y grupo actualizado';
+                }
+            } elseif (!empty($validated['grupo']['nombre'])) {
+                $grupo = Grupo::create([
+                    'nombre' => $validated['grupo']['nombre'],
+                    'user_id' => $user->id
+                ]);
+                $grupoAction = ' y grupo creado';
+            }
+        }
 
         $clase->load(['user' => function($query) {
             $query->select('id', 'name', 'surname', 'email', 'rol');
@@ -448,13 +495,19 @@ public function updateClaseProfesor(Request $request, $id)
                 'surname' => $clase->user->surname,
                 'email' => $clase->user->email,
                 'rol' => $clase->user->rol
+            ] : null,
+            'grupo' => $grupo ? [
+                'id' => $grupo->id,
+                'nombre' => $grupo->nombre,
+                'created_at' => $grupo->created_at,
+                'updated_at' => $grupo->updated_at
             ] : null
         ];
 
         return response()->json([
             'success' => true,
             'data' => $responseData,
-            'message' => 'Clase actualizada correctamente'
+            'message' => 'Clase actualizada correctamente' . $grupoAction
         ], 200);
 
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -473,7 +526,7 @@ public function updateClaseProfesor(Request $request, $id)
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => 'Error al actualizar la clase: ' . $e->getMessage()
+            'message' => 'Error al actualizar los recursos: ' . $e->getMessage()
         ], 500);
     }
 }
@@ -484,11 +537,22 @@ public function destroyClaseProfesor($id)
         $user = auth()->user();
         $clase = Clase::where('id', $id)->where('user_id', $user->id)->firstOrFail();
         
+        $gruposEliminados = Grupo::where('user_id', $user->id)->pluck('nombre')->toArray();
+        $cantidadGrupos = count($gruposEliminados);
+        
+        Grupo::where('user_id', $user->id)->delete();
+        
         $clase->delete();
+
+        $message = 'Clase eliminada correctamente';
+        if ($cantidadGrupos > 0) {
+            $message = "Clase eliminada correctamente junto con {$cantidadGrupos} grupo(s) relacionado(s)";
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Clase eliminada correctamente'
+            'message' => $message,
+            'grupos_eliminados' => $gruposEliminados
         ], 200);
 
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -500,7 +564,7 @@ public function destroyClaseProfesor($id)
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'message' => 'Error al eliminar la clase: ' . $e->getMessage()
+            'message' => 'Error al eliminar los recursos: ' . $e->getMessage()
         ], 500);
     }
 }
@@ -511,7 +575,6 @@ public function fetchUsersGroupsAndClassesProfesor()
     try {
         $user = Auth::user();
         
-        // Verificar que el usuario esté autenticado y sea profesor
         if (!$user || $user->rol !== 'profesor') {
             return response()->json([
                 'success' => false,
@@ -519,7 +582,6 @@ public function fetchUsersGroupsAndClassesProfesor()
             ], 403);
         }
 
-        // Obtener información del profesor con sus relaciones
         $profesor = User::where('id', $user->id)
             ->with(['grupo', 'clase'])
             ->first();
