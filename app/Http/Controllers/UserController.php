@@ -448,7 +448,7 @@ public function updateClaseProfesor(Request $request, $id)
 
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
-            'grupo.id' => 'nullable|integer|exists:grupos,id',
+            'grupo.id' => 'nullable|integer|exists:grupo,id',
             'grupo.nombre' => 'nullable|string|max:255'
         ]);
 
@@ -457,10 +457,8 @@ public function updateClaseProfesor(Request $request, $id)
         $grupo = null;
         $grupoAction = '';
 
-        // Gestionar grupo si se proporciona
         if (!empty($validated['grupo'])) {
             if (!empty($validated['grupo']['id'])) {
-                // Actualizar grupo existente
                 $grupo = Grupo::where('id', $validated['grupo']['id'])
                              ->where('user_id', $user->id)
                              ->first();
