@@ -61,7 +61,6 @@ class ModuloController extends Controller
                 'user_id' => 'required|exists:users,id'
             ]);
 
-            // Verificar que el usuario tenga rol profesor usando findOrFail
             $profesor = User::findOrFail($validated['user_id']);
 
             if ($profesor->rol !== 'profesor') {
@@ -276,7 +275,7 @@ class ModuloController extends Controller
                 'grupo_id' => 'required|exists:grupo,id'
             ]);
 
-            $validated['user_id'] = $user->id; // El profesor autenticado será el propietario
+            $validated['user_id'] = $user->id; 
 
             $modulo = Modulo::create($validated);
 
@@ -333,7 +332,7 @@ class ModuloController extends Controller
                 'grupo_id' => 'required|exists:grupo,id'
             ]);
 
-            $validated['user_id'] = $user->id; // Mantener el mismo profesor
+            $validated['user_id'] = $user->id; 
 
             $modulo->update($validated);
 

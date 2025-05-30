@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Nota;
 use App\Models\User;
+use App\Models\Entrega;
+use App\Models\Rubrica;
+
+
+
 
 class NotaController extends Controller
 {
@@ -298,15 +303,13 @@ class NotaController extends Controller
                 'comentario' => 'nullable|string'
             ]);
 
-            // Verificar que la entrega pertenece a una práctica del profesor
-            $entrega = \App\Models\Entrega::with('practica')
+            $entrega = Entrega::with('practica')
                 ->whereHas('practica', function($query) use ($user) {
                     $query->where('profesor_id', $user->id);
                 })
                 ->findOrFail($validated['entrega_id']);
 
-            // Verificar que la rúbrica pertenece a una práctica del profesor
-            $rubrica = \App\Models\Rubrica::with('practica')
+            $rubrica = Rubrica::with('practica')
                 ->whereHas('practica', function($query) use ($user) {
                     $query->where('profesor_id', $user->id);
                 })
@@ -377,14 +380,13 @@ class NotaController extends Controller
                 'comentario' => 'nullable|string'
             ]);
 
-            // Verificar permisos sobre la nueva entrega y rúbrica
-            $entrega = \App\Models\Entrega::with('practica')
+            $entrega = Entrega::with('practica')
                 ->whereHas('practica', function($query) use ($user) {
                     $query->where('profesor_id', $user->id);
                 })
                 ->findOrFail($validated['entrega_id']);
 
-            $rubrica = \App\Models\Rubrica::with('practica')
+            $rubrica = Rubrica::with('practica')
                 ->whereHas('practica', function($query) use ($user) {
                     $query->where('profesor_id', $user->id);
                 })

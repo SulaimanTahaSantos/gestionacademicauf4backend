@@ -101,7 +101,6 @@ class EntregaController extends Controller
                 'archivo' => 'required|string|max:255'
             ]);
 
-            // Use findOrFail and validate role through relationship
             $alumno = User::findOrFail($validated['user_id']);
 
             if ($alumno->rol !== 'user') {
@@ -178,7 +177,6 @@ class EntregaController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // Verificar que la entrega existe
             $entrega = Entrega::find($id);
             
             if (!$entrega) {
@@ -414,8 +412,7 @@ class EntregaController extends Controller
                 'archivo' => 'nullable|string'
             ]);
 
-            // Verificar que la práctica pertenece al profesor
-            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+            $practica = Practica::where('id', $validated['practica_id'])
                 ->where('profesor_id', $user->id)
                 ->firstOrFail();
 

@@ -20,7 +20,7 @@ class IsAdmin
             return $next($request);
         }
         return response()->json([
-            'message' => 'Unauthorized, you are not an admin'
+            'message' => 'Usuario no autenticado o sin permisos de administrador'
         ], 403);
 
     }

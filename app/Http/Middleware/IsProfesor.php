@@ -24,7 +24,7 @@ class IsProfesor
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Usuario no autenticado'
+                    'message' => 'Usuario no autenticado o sin permisos de profesor'
                 ], 401);
             }
 

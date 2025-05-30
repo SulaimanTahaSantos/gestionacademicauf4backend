@@ -208,7 +208,6 @@ public function insertUsersAndGroupsAndClasses(Request $request)
     $class->user_id = $user->id;
     $class->save();
 
-    // Recargar relaciones
     $user->load('grupo', 'clase');
 
     return response()->json($user, 201);

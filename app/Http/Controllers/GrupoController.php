@@ -29,7 +29,6 @@ class GrupoController extends Controller
             ])->get();
             
             $resultado = $grupos->map(function($grupo) {
-                // Get modulos through relationships
                 $modulosConUsuarios = $grupo->modulos->map(function($modulo) {
                     $usuario = null;
                     
@@ -440,7 +439,7 @@ class GrupoController extends Controller
 
             $grupo = Grupo::create([
                 'nombre' => $validated['nombre'],
-                'user_id' => $user->id // El profesor autenticado será el propietario
+                'user_id' => $user->id 
             ]);
 
             $modulosCreados = [];
@@ -468,7 +467,7 @@ class GrupoController extends Controller
                     'descripcion' => $moduloData['descripcion'] ?? null,
                     'cursar_id' => $cursar ? $cursar->id : null,
                     'grupo_id' => $grupo->id,
-                    'user_id' => $user->id // El profesor autenticado será el propietario del módulo
+                    'user_id' => $user->id 
                 ]);
 
                 $usuarioData = null;
@@ -538,7 +537,6 @@ class GrupoController extends Controller
 
             $grupo->update([
                 'nombre' => $validated['nombre']
-                // user_id no se actualiza, mantiene el profesor original
             ]);
 
             $grupo->load(['cursars', 'modulos.cursar']);
@@ -600,7 +598,6 @@ class GrupoController extends Controller
                         'codigo' => $moduloData['codigo'],
                         'descripcion' => $moduloData['descripcion'] ?? null,
                         'cursar_id' => $cursar ? $cursar->id : null
-                        // user_id no se actualiza, mantiene el profesor original
                     ]);
                 } else {
                     $modulo = Modulo::create([
