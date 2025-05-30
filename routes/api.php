@@ -28,16 +28,8 @@ function RetornarMensaje($mensaje){
 }
 
  // public routes 
-// Route::get('/users', [UserController::class, 'index']);
-// Route::get('/users/{id}', [UserController::class, 'show']);
-// Route::post('/users', [UserController::class, 'store']);
-// Route::put('/users/{id}', [UserController::class, 'update']);
-// Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::post('/registro', [UserController::class, 'register']);
 Route::post('/inicioSesion', [UserController::class, 'inicioSesion']);
-// Route::get('/login', function () {
-//     return RetornarMensaje('Login successful');
-// });
 
 // vista clases routes
 
@@ -66,13 +58,10 @@ Route::middleware(['isUserAuth'])->group(function(){
 
 Route::middleware(['isAdmin'])->group(function(){
     Route::get('/users/{id}', [UserController::class, 'show']);
-    // Route::post('/users', [UserController::class, 'store']);
-    // Route::put('/users/{id}', [UserController::class, 'update']);
-    // Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    
     Route::post('/insertUsersAndGroupsAndClasses',[UserController::class, 'insertUsersAndGroupsAndClasses']);
 Route::put('/updateUserAndGroupsAndClasses/{id}',[UserController::class, 'updateUserAndGroupsAndClasses']);
 Route::delete('/deleteUserAndGroupsAndClasses/{id}',[UserController::class, 'deleteUserAndGroupsAndClasses']);
-// vista configuracion routes
 
 
 

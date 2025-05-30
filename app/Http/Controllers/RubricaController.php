@@ -7,6 +7,8 @@ use App\Models\Rubrica;
 use App\Models\Practica;
 use App\Models\User;
 use App\Models\Nota;
+use App\Models\CriterioRubrica;
+
 
 
 use Illuminate\Support\Facades\Validator;
@@ -538,8 +540,7 @@ class RubricaController extends Controller
                 'evaluador_id' => 'required|exists:users,id'
             ]);
 
-            // Verificar que la práctica pertenece al profesor
-            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+            $practica = Practica::where('id', $validated['practica_id'])
                 ->where('profesor_id', $user->id)
                 ->firstOrFail();
 
@@ -607,8 +608,7 @@ class RubricaController extends Controller
                 'evaluador_id' => 'required|exists:users,id'
             ]);
 
-            // Verificar que la nueva práctica también pertenece al profesor
-            $practica = \App\Models\Practica::where('id', $validated['practica_id'])
+            $practica = Practica::where('id', $validated['practica_id'])
                 ->where('profesor_id', $user->id)
                 ->firstOrFail();
 

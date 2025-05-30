@@ -150,6 +150,16 @@ class IsProfesor
     "rol": "profesor",
     "url": "https://mi-perfil.com"
 }
+
+{
+    "name": "pepe",
+    "surname": "Pérez",
+    "email": "pepe@example.com",
+    "password": "password123",
+    "dni": "12345678B",
+    "rol": "admin",
+    "url": "https://mi-perfil.com"
+}
 ```
 
 **Response (201):**
@@ -805,11 +815,11 @@ class IsProfesor
 **Request:**
 ```json
 {
-    "nota": 9.0,
-    "comentario": "Excelente trabajo, muy completo",
-    "estudiante_id": 2,
-    "evaluador_id": 3,
-    "entrega_id": 1
+    "nota_final": 9.2,
+    "comentario": "Excelente proyecto, muy bien documentado",
+    "user_id": 10,
+    "entrega_id": 12,
+    "rubrica_id":10
 }
 ```
 
@@ -818,26 +828,72 @@ class IsProfesor
 {
     "success": true,
     "data": {
-        "id": 5,
-        "nota": 9.0,
-        "comentario": "Excelente trabajo, muy completo",
-        "fecha_evaluacion": "2025-05-30T16:00:00.000000Z",
-        "estudiante": {
-            "id": 2,
-            "name": "María",
-            "surname": "García"
-        },
-        "evaluador": {
-            "id": 3,
-            "name": "Juan",
-            "surname": "Pérez"
-        }
+        "notas_id": 14,
+        "nota_final": 9.2,
+        "notas_comentario": "Excelente proyecto, muy bien documentado",
+        "entregas_archivo": "fkaopfkafkafakp",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "evaluador_name": "sulaiman",
+        "evaluador_surname": "admin",
+        "rubrica_documento": null
     },
     "message": "Nota creada correctamente"
 }
 ```
 
-#### **25. Actualizar Entrega**
+#### **25. Actualizar Nota (Admin)**
+**Endpoint:** `PUT /api/notas/{id}`  
+**Middleware:** isAdmin
+
+**Request:**
+```json
+{
+    "nota_final": 10,
+    "comentario": "Excelente proyecto, muy bien documentado",
+    "user_id": 10,
+    "entrega_id": 12,
+    "rubrica_id":10
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "notas_id": 14,
+        "nota_final": 10,
+        "notas_comentario": "Excelente proyecto, muy bien documentado",
+        "entregas_archivo": "fkaopfkafkafakp",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "evaluador_name": "sulaiman",
+        "evaluador_surname": "admin",
+        "rubrica_documento": null
+    },
+    "message": "Nota actualizada correctamente"
+}
+```
+
+#### **26. Eliminar Nota (Admin)**
+**Endpoint:** `DELETE /api/notas/{id}`  
+**Middleware:** isAdmin
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "notas_id": 14,
+        "nota_final": "10.00",
+        "comentario": "Excelente proyecto, muy bien documentado"
+    },
+    "message": "Nota eliminada correctamente"
+}
+```
+
+#### **27. Actualizar Entrega**
 **Endpoint:** `PUT /api/entregas/{id}`  
 **Middleware:** isAdmin
 
@@ -856,36 +912,75 @@ class IsProfesor
 {
     "success": true,
     "data": {
-        "id": 1,
-        "descripcion": "Entrega actualizada del proyecto",
-        "fecha_entrega": "2025-06-25T23:59:59.000000Z",
-        "archivo_url": "https://ejemplo.com/archivo-actualizado.pdf",
-        "nota": 8.8,
-        "updated_at": "2025-05-30T16:30:00.000000Z"
+        "entrega_id": 12,
+        "entrega_practica_id": 5,
+        "entrega_user_id": 6,
+        "fecha_entrega": "2025-06-25T23:59:59",
+        "archivo": "fkaopfkafkafakp",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "alumno_email": "sulat3821@gmail.com",
+        "alumno_dni": "54314220L",
+        "practica_identificador": "RED001",
+        "practica_titulo": "Configuración de Redes",
+        "practica_nombre": "Práctica Redes",
+        "practica_fecha_entrega": "2025-07-05",
+        "profesor_name": "Juan Carlos",
+        "profesor_surname": "Pérez García",
+        "rubrica_nombre": "Rúbrica Frontend",
+        "rubrica_documento": null,
+        "nota_final": "9.20",
+        "nota_comentario": "Excelente proyecto, muy bien documentado",
+        "evaluador_name": "Sulaiman",
+        "evaluador_surname": "El Taha Santos"
     },
     "message": "Entrega actualizada correctamente"
 }
 ```
 
-#### **26. Crear Rúbrica**
+#### **28. Eliminar Entrega (Admin)**
+**Endpoint:** `DELETE /api/entregas/{id}`  
+**Middleware:** isAdmin
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "entrega_id": 12,
+        "archivo": "fkaopfkafkafakp",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "practica_titulo": "Configuración de Redes",
+        "practica_identificador": "RED001"
+    },
+    "message": "Entrega eliminada correctamente"
+}
+```
+
+#### **29. Crear Rúbrica**
 **Endpoint:** `POST /api/rubricas`  
 **Middleware:** isAdmin
 
 **Request:**
 ```json
 {
-    "nombre": "Rúbrica Proyecto Web",
-    "descripcion": "Evaluación de proyectos web completos",
+    "nombre": "Rúbrica Frontend",
+    "documento":"rubricaFrontend.pdf",
+    "descripcion": "Evaluación de proyectos frontend",
+    "practica_id": 5,
+    "evaluador_id":11,
+
     "criterios": [
         {
-            "nombre": "Diseño UI/UX",
-            "descripcion": "Calidad del diseño de interfaz",
-            "peso": 25
+            "nombre": "Responsive Design",
+            "descripcion": "Adaptabilidad a diferentes dispositivos",
+            "puntuacion_maxima": 25
         },
         {
-            "nombre": "Funcionalidad Backend",
-            "descripcion": "Correcto funcionamiento del backend",
-            "peso": 35
+            "nombre": "Interactividad",
+            "descripcion": "Elementos interactivos y UX",
+            "puntuacion_maxima": 30
         }
     ]
 }
@@ -895,45 +990,214 @@ class IsProfesor
 ```json
 {
     "success": true,
+    "message": "Rúbrica creada exitosamente",
     "data": {
-        "id": 3,
-        "nombre": "Rúbrica Proyecto Web",
-        "descripcion": "Evaluación de proyectos web completos",
+        "rubrica": {
+            "id": 12,
+            "nombre": "Rúbrica Frontend",
+            "documento": "rubricaFrontend.pdf",
+            "created_at": "2025-05-30T16:38:52.000000Z",
+            "updated_at": "2025-05-30T16:38:52.000000Z"
+        },
+        "practica_asignada": {
+            "id": 5,
+            "identificador": "RED001",
+            "titulo": "Configuración de Redes",
+            "descripcion": "Configurar una red empresarial",
+            "nombre_practica": "Práctica Redes",
+            "fecha_entrega": "2025-07-05",
+            "enlace_practica": "https://classroom.google.com/practica5",
+            "profesor_id": 11
+        },
+        "profesor_practica": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
+        "evaluador_asignado": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
         "criterios": [
             {
-                "id": 5,
-                "nombre": "Diseño UI/UX",
-                "descripcion": "Calidad del diseño de interfaz",
-                "peso": 25,
-                "rubrica_id": 3
+                "id": 13,
+                "nombre": "Responsive Design",
+                "puntuacion_maxima": 25,
+                "descripcion": "Adaptabilidad a diferentes dispositivos"
             },
             {
-                "id": 6,
-                "nombre": "Funcionalidad Backend",
-                "descripcion": "Correcto funcionamiento del backend",
-                "peso": 35,
-                "rubrica_id": 3
+                "id": 14,
+                "nombre": "Interactividad",
+                "puntuacion_maxima": 30,
+                "descripcion": "Elementos interactivos y UX"
             }
         ]
-    },
-    "message": "Rúbrica creada correctamente"
+    }
 }
 ```
 
-#### **27. Crear Enunciado**
+#### **30. Actualizar Rúbrica (Admin)**
+**Endpoint:** `PUT /api/rubricas/{id}`  
+**Middleware:** isAdmin
+
+**Request:**
+```json
+{
+    "nombre": "Rúbrica Frontend",
+    "documento":"rubricaFrontend.pdf",
+    "descripcion": "Evaluación de proyectos frontend",
+    "practica_id": 5,
+    "evaluador_id":11,
+
+    "criterios": [
+        {
+            "nombre": "Responsive Design",
+            "descripcion": "Adaptabilidad a diferentes dispositivos",
+            "puntuacion_maxima": 25
+        },
+        {
+            "nombre": "Interactividad",
+            "descripcion": "Elementos interactivos y UX",
+            "puntuacion_maxima": 30
+        }
+    ]
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Rúbrica actualizada exitosamente",
+    "data": {
+        "rubrica": {
+            "id": 12,
+            "nombre": "Rúbrica Frontendddd",
+            "documento": "rubricaFrontendddd.pdf",
+            "created_at": "2025-05-30T16:38:52.000000Z",
+            "updated_at": "2025-05-30T16:40:34.000000Z"
+        },
+        "practica_asignada": {
+            "id": 5,
+            "identificador": "RED001",
+            "titulo": "Configuración de Redes",
+            "descripcion": "Configurar una red empresarial",
+            "nombre_practica": "Práctica Redes",
+            "fecha_entrega": "2025-07-05",
+            "enlace_practica": "https://classroom.google.com/practica5",
+            "profesor_id": 11
+        },
+        "profesor_practica": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
+        "evaluador_asignado": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
+        "criterios": [
+            {
+                "id": 15,
+                "nombre": "Responsive Design",
+                "puntuacion_maxima": 25,
+                "descripcion": "Adaptabilidad a diferentes dispositivos"
+            },
+            {
+                "id": 16,
+                "nombre": "Interactividad",
+                "puntuacion_maxima": 30,
+                "descripcion": "Elementos interactivos y UX"
+            }
+        ]
+    }
+}
+```
+
+#### **31. Eliminar Rúbrica (Admin)**
+**Endpoint:** `DELETE /api/rubricas/{id}`  
+**Middleware:** isAdmin
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Rúbrica eliminada exitosamente",
+    "data": {
+        "rubrica": {
+            "id": 12,
+            "nombre": "Rúbrica Frontendddd",
+            "documento": "rubricaFrontendddd.pdf",
+            "created_at": "2025-05-30T16:38:52.000000Z",
+            "updated_at": "2025-05-30T16:40:34.000000Z"
+        },
+        "practica_asignada": {
+            "id": 5,
+            "identificador": "RED001",
+            "titulo": "Configuración de Redes",
+            "descripcion": "Configurar una red empresarial",
+            "nombre_practica": "Práctica Redes",
+            "fecha_entrega": "2025-07-05",
+            "enlace_practica": "https://classroom.google.com/practica5",
+            "profesor_id": 11
+        },
+        "profesor_practica": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
+        "evaluador_asignado": {
+            "id": 11,
+            "nombre": "Juan Carlos",
+            "apellido": "Pérez García",
+            "email": "juan.carlos@example.com",
+            "rol": "profesor"
+        },
+        "criterios_eliminados": [
+            {
+                "id": 15,
+                "nombre": "Responsive Design",
+                "puntuacion_maxima": 25,
+                "descripcion": "Adaptabilidad a diferentes dispositivos"
+            },
+            {
+                "id": 16,
+                "nombre": "Interactividad",
+                "puntuacion_maxima": 30,
+                "descripcion": "Elementos interactivos y UX"
+            }
+        ],
+        "total_criterios_eliminados": 2,
+        "notas_eliminadas": 0
+    }
+}
+```
+
+#### **32. Crear Enunciado**
 **Endpoint:** `POST /api/enunciados`  
 **Middleware:** isAdmin
 
 **Request:**
 ```json
 {
-    "descripcion": "Desarrollar una API REST completa con Laravel",
-    "fecha_limite": "2025-07-15T23:59:59",
-    "practica_id": 2,
-    "modulo_id": 1,
-    "user_id": 3,
-    "rubrica_id": 1,
-    "grupo_id": 1
+    "descripcion": "Crear una aplicación móvil con React Native",
+    "fecha_limite": "2025-08-15T23:59:59",
+    "practica_id": 3,
+    "modulo_id": 13,
+    "rubrica_id": 5,
+    "grupo_id": 13
 }
 ```
 
@@ -941,34 +1205,99 @@ class IsProfesor
 ```json
 {
     "success": true,
+    "message": "Enunciado creado exitosamente",
     "data": {
-        "id": 3,
-        "descripcion": "Desarrollar una API REST completa con Laravel",
-        "fecha_limite": "2025-07-15T23:59:59.000000Z",
+        "enunciado": {
+            "id": 7,
+            "descripcion": "Crear una aplicación móvil con React Native",
+            "fecha_limite": "2025-08-15T23:59:59.000000Z",
+            "created_at": "2025-05-30T16:44:40.000000Z",
+            "updated_at": "2025-05-30T16:44:40.000000Z"
+        },
         "practica": {
-            "id": 2,
-            "nombre": "API REST Backend"
+            "id": 3,
+            "titulo": "App Mobile Android",
+            "nombre": "Práctica Mobile",
+            "identificador": "MOB001"
         },
         "modulo": {
-            "id": 1,
-            "nombre": "Desarrollo Web Backend",
-            "codigo": "DWB001"
+            "id": 13,
+            "nombre": "Desarrollo Backend"
         },
-        "profesor": {
-            "id": 3,
-            "name": "Juan",
-            "surname": "Pérez"
-        },
+        "profesor": null,
         "rubrica": {
-            "id": 1,
-            "nombre": "Rúbrica Proyecto Final"
+            "id": 5,
+            "nombre": "Rúbrica Redes"
         },
         "grupo": {
-            "id": 1,
-            "nombre": "Grupo DAW 2025"
+            "id": 13,
+            "nombre": "Grupo de Prueba Profesor"
         }
-    },
-    "message": "Enunciado creado correctamente"
+    }
+}
+```
+
+#### **33. Actualizar Enunciado (Admin)**
+**Endpoint:** `PUT /api/enunciados/{id}`  
+**Middleware:** isAdmin
+
+**Request:**
+```json
+{
+    "descripcion": "Crear una aplicación móvil con React Nativeeeeed",
+    "fecha_limite": "2025-08-15T23:59:59",
+    "practica_id": 3,
+    "modulo_id": 13,
+    "rubrica_id": 5,
+    "grupo_id": 13
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Enunciado actualizado exitosamente",
+    "data": {
+        "enunciado": {
+            "id": 7,
+            "descripcion": "Crear una aplicación móvil con React Nativeeeeed",
+            "fecha_limite": "2025-08-15T23:59:59.000000Z",
+            "created_at": "2025-05-30T16:44:40.000000Z",
+            "updated_at": "2025-05-30T16:47:33.000000Z"
+        },
+        "practica": {
+            "id": 3,
+            "titulo": "App Mobile Android",
+            "nombre": "Práctica Mobile",
+            "identificador": "MOB001"
+        },
+        "modulo": {
+            "id": 13,
+            "nombre": "Desarrollo Backend"
+        },
+        "profesor": null,
+        "rubrica": {
+            "id": 5,
+            "nombre": "Rúbrica Redes"
+        },
+        "grupo": {
+            "id": 13,
+            "nombre": "Grupo de Prueba Profesor"
+        }
+    }
+}
+```
+
+#### **34. Eliminar Enunciado (Admin)**
+**Endpoint:** `DELETE /api/enunciados/{id}`  
+**Middleware:** isAdmin
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Enunciado eliminado correctamente"
 }
 ```
 
@@ -976,7 +1305,7 @@ class IsProfesor
 
 ### **📌 RUTAS DE PROFESOR (isProfesor)**
 
-#### **28. Obtener Grupos del Profesor**
+#### **35. Obtener Grupos del Profesor**
 **Endpoint:** `GET /api/profesor/grupos`  
 **Middleware:** isProfesor
 
@@ -1002,7 +1331,7 @@ class IsProfesor
 }
 ```
 
-#### **29. Crear Grupo (Profesor)**
+#### **36. Crear Grupo (Profesor)**
 **Endpoint:** `POST /api/profesor/grupos`  
 **Middleware:** isProfesor
 
@@ -1050,7 +1379,7 @@ class IsProfesor
 }
 ```
 
-#### **30. Actualizar Grupo (Profesor)**
+#### **37. Actualizar Grupo (Profesor)**
 **Endpoint:** `PUT /api/profesor/grupos/{id}`  
 **Middleware:** isProfesor
 
@@ -1098,7 +1427,7 @@ class IsProfesor
 }
 ```
 
-#### **31. Eliminar Grupo (Profesor)**
+#### **38. Eliminar Grupo (Profesor)**
 **Endpoint:** `DELETE /api/profesor/grupos/{id}`  
 **Middleware:** isProfesor
 
@@ -1110,7 +1439,7 @@ class IsProfesor
 }
 ```
 
-#### **32. Obtener Módulos del Profesor**
+#### **39. Obtener Módulos del Profesor**
 **Endpoint:** `GET /api/profesor/modulos`  
 **Middleware:** isProfesor
 
@@ -1133,7 +1462,7 @@ class IsProfesor
 }
 ```
 
-#### **33. Crear Módulo (Profesor)**
+#### **40. Crear Módulo (Profesor)**
 **Endpoint:** `POST /api/profesor/modulos`  
 **Middleware:** isProfesor
 
@@ -1164,7 +1493,7 @@ class IsProfesor
 }
 ```
 
-#### **34. Actualizar Módulo (Profesor)**
+#### **41. Actualizar Módulo (Profesor)**
 **Endpoint:** `PUT /api/profesor/modulos/{id}`  
 **Middleware:** isProfesor
 
@@ -1195,7 +1524,7 @@ class IsProfesor
 }
 ```
 
-#### **35. Eliminar Módulo (Profesor)**
+#### **42. Eliminar Módulo (Profesor)**
 **Endpoint:** `DELETE /api/profesor/modulos/{id}`  
 **Middleware:** isProfesor
 
@@ -1207,7 +1536,7 @@ class IsProfesor
 }
 ```
 
-#### **36. Obtener Clases del Profesor**
+#### **43. Obtener Clases del Profesor**
 **Endpoint:** `GET /api/profesor/clases`  
 **Middleware:** isProfesor
 
@@ -1242,7 +1571,7 @@ class IsProfesor
 }
 ```
 
-#### **37. Crear Clase (Profesor)**
+#### **44. Crear Clase (Profesor)**
 **Endpoint:** `POST /api/profesor/clases`  
 **Middleware:** isProfesor
 
@@ -1285,7 +1614,7 @@ class IsProfesor
 }
 ```
 
-#### **38. Actualizar Clase (Profesor)**
+#### **45. Actualizar Clase (Profesor)**
 **Endpoint:** `PUT /api/profesor/clases/{id}`  
 **Middleware:** isProfesor
 
@@ -1329,7 +1658,7 @@ class IsProfesor
 }
 ```
 
-#### **39. Eliminar Clase (Profesor)**
+#### **46. Eliminar Clase (Profesor)**
 **Endpoint:** `DELETE /api/profesor/clases/{id}`  
 **Middleware:** isProfesor
 
@@ -1345,7 +1674,7 @@ class IsProfesor
 }
 ```
 
-#### **40. Obtener Entregas del Profesor**
+#### **47. Obtener Entregas del Profesor**
 **Endpoint:** `GET /api/profesor/entregas`  
 **Middleware:** isProfesor
 
@@ -1374,7 +1703,7 @@ class IsProfesor
 }
 ```
 
-#### **41. Obtener Notas del Profesor**
+#### **48. Obtener Notas del Profesor**
 **Endpoint:** `GET /api/profesor/notas`  
 **Middleware:** isProfesor
 
@@ -1399,17 +1728,18 @@ class IsProfesor
 }
 ```
 
-#### **42. Crear Nota (Profesor)**
+#### **49. Crear Nota (Profesor)**
 **Endpoint:** `POST /api/profesor/notas`  
 **Middleware:** isProfesor
 
 **Request:**
 ```json
 {
-    "nota": 9.2,
+    "nota_final": 9.2,
     "comentario": "Excelente proyecto, muy bien documentado",
-    "estudiante_id": 4,
-    "entrega_id": 3
+    "user_id": 6,
+    "entrega_id": 12,
+    "rubrica_id":10
 }
 ```
 
@@ -1418,26 +1748,20 @@ class IsProfesor
 {
     "success": true,
     "data": {
-        "id": 8,
-        "nota": 9.2,
+        "nota_id": 13,
+        "nota_final": 9.2,
         "comentario": "Excelente proyecto, muy bien documentado",
-        "fecha_evaluacion": "2025-05-30T18:00:00.000000Z",
-        "estudiante": {
-            "id": 4,
-            "name": "Ana",
-            "surname": "López"
-        },
-        "evaluador": {
-            "id": 3,
-            "name": "Juan",
-            "surname": "Pérez"
-        }
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "evaluador_name": "Sulaiman",
+        "evaluador_surname": "El Taha Santos",
+        "rubrica_nombre": "Rúbrica Frontend"
     },
     "message": "Nota creada correctamente"
 }
 ```
 
-#### **43. Obtener Rúbricas del Profesor**
+#### **50. Obtener Rúbricas del Profesor**
 **Endpoint:** `GET /api/profesor/rubricas`  
 **Middleware:** isProfesor
 
@@ -1469,7 +1793,7 @@ class IsProfesor
 }
 ```
 
-#### **44. Crear Rúbrica (Profesor)**
+#### **51. Crear Rúbrica (Profesor)**
 **Endpoint:** `POST /api/profesor/rubricas`  
 **Middleware:** isProfesor
 
@@ -1477,17 +1801,21 @@ class IsProfesor
 ```json
 {
     "nombre": "Rúbrica Frontend",
+    "documento":"rubricaFrontend.pdf",
     "descripcion": "Evaluación de proyectos frontend",
+    "practica_id": 5,
+    "evaluador_id":11,
+
     "criterios": [
         {
             "nombre": "Responsive Design",
             "descripcion": "Adaptabilidad a diferentes dispositivos",
-            "peso": 25
+            "puntuacion_maxima": 25
         },
         {
             "nombre": "Interactividad",
             "descripcion": "Elementos interactivos y UX",
-            "peso": 30
+            "puntuacion_maxima": 30
         }
     ]
 }
@@ -1498,36 +1826,79 @@ class IsProfesor
 {
     "success": true,
     "data": {
-        "id": 5,
+        "id": 11,
         "nombre": "Rúbrica Frontend",
-        "descripcion": "Evaluación de proyectos frontend",
-        "profesor": {
-            "id": 3,
-            "name": "Juan",
-            "surname": "Pérez"
-        },
-        "criterios": [
-            {
-                "id": 10,
-                "nombre": "Responsive Design",
-                "descripcion": "Adaptabilidad a diferentes dispositivos",
-                "peso": 25,
-                "rubrica_id": 5
-            },
-            {
-                "id": 11,
-                "nombre": "Interactividad",
-                "descripcion": "Elementos interactivos y UX",
-                "peso": 30,
-                "rubrica_id": 5
-            }
-        ]
+        "documento": "rubricaFrontend.pdf",
+        "practica_titulo": "Configuración de Redes",
+        "profesor_name": "Juan Carlos",
+        "profesor_surname": "Pérez García",
+        "evaluador_name": "Juan Carlos",
+        "evaluador_surname": "Pérez García"
     },
     "message": "Rúbrica creada correctamente"
 }
 ```
 
-#### **45. Obtener Enunciados del Profesor**
+
+#### **52. Actualizar Rúbrica (Profesor)**
+**Endpoint:** `PUT /api/profesor/rubricas/{id}`  
+**Middleware:** isProfesor
+
+**Request:**
+```json
+{
+    "nombre": "Rúbrica Frontenddddddd",
+    "documento":"rubricaFrontend.pdf",
+    "descripcion": "Evaluación de proyectos frontend",
+    "practica_id": 5,
+    "evaluador_id":11,
+
+    "criterios": [
+        {
+            "nombre": "Responsive Design",
+            "descripcion": "Adaptabilidad a diferentes dispositivos",
+            "puntuacion_maxima": 25
+        },
+        {
+            "nombre": "Interactividad",
+            "descripcion": "Elementos interactivos y UX",
+            "puntuacion_maxima": 30
+        }
+    ]
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "id": 11,
+        "nombre": "Rúbrica Frontenddddddd",
+        "documento": "rubricaFrontend.pdf",
+        "practica_titulo": "Configuración de Redes",
+        "profesor_name": "Juan Carlos",
+        "profesor_surname": "Pérez García",
+        "evaluador_name": "Juan Carlos",
+        "evaluador_surname": "Pérez García"
+    },
+    "message": "Rúbrica actualizada correctamente"
+}
+```
+
+#### **53. Eliminar Rúbrica (Profesor)**
+**Endpoint:** `DELETE /api/profesor/rubricas/{id}`  
+**Middleware:** isProfesor
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Rúbrica eliminada correctamente"
+}
+```
+
+#### **54. Obtener Enunciados del Profesor**
 **Endpoint:** `GET /api/profesor/enunciados`  
 **Middleware:** isProfesor
 
@@ -1559,7 +1930,7 @@ class IsProfesor
 }
 ```
 
-#### **46. Crear Enunciado (Profesor)**
+#### **55. Crear Enunciado (Profesor)**
 **Endpoint:** `POST /api/profesor/enunciados`  
 **Middleware:** isProfesor
 
@@ -1571,7 +1942,7 @@ class IsProfesor
     "practica_id": 3,
     "modulo_id": 13,
     "rubrica_id": 5,
-    "grupo_id": 1
+    "grupo_id": 13
 }
 ```
 
@@ -1579,38 +1950,202 @@ class IsProfesor
 ```json
 {
     "success": true,
+    "message": "Enunciado creado exitosamente",
     "data": {
-        "id": 6,
-        "descripcion": "Crear una aplicación móvil con React Native",
-        "fecha_limite": "2025-08-15T23:59:59.000000Z",
+        "enunciado": {
+            "id": 6,
+            "descripcion": "Crear una aplicación móvil con React Native",
+            "fecha_limite": "2025-08-15T23:59:59.000000Z",
+            "created_at": "2025-05-30T10:38:34.000000Z",
+            "updated_at": "2025-05-30T10:38:34.000000Z"
+        },
         "practica": {
             "id": 3,
-            "nombre": "Proyecto Mobile"
+            "titulo": "App Mobile Android",
+            "nombre": "Práctica Mobile",
+            "identificador": "MOB001"
         },
         "modulo": {
             "id": 13,
-            "nombre": "Desarrollo Mobile Avanzado",
-            "codigo": "MOD004-UPD"
+            "nombre": "Desarrollo Backend"
         },
         "profesor": {
-            "id": 3,
-            "name": "Juan",
-            "surname": "Pérez"
+            "id": 11,
+            "name": "Juan Carlos",
+            "rol": "profesor"
         },
         "rubrica": {
             "id": 5,
-            "nombre": "Rúbrica Frontend"
+            "nombre": "Rúbrica Redes"
         },
         "grupo": {
-            "id": 1,
-            "nombre": "Grupo DAW 2025"
+            "id": 13,
+            "nombre": "Grupo de Prueba Profesor"
         }
-    },
-    "message": "Enunciado creado correctamente"
+    }
 }
 ```
 
-#### **47. Obtener Información Completa del Profesor**
+#### **56. Actualizar Enunciado (Profesor)**
+**Endpoint:** `PUT /api/profesor/enunciados/{id}`  
+**Middleware:** isProfesor
+
+**Request:**
+```json
+{
+    "descripcion": "Crear una aplicación móvil con React Nativeeeeeee",
+    "fecha_limite": "2025-08-15T23:59:59",
+    "practica_id": 3,
+    "modulo_id": 13,
+    "rubrica_id": 5,
+    "grupo_id": 13
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Enunciado actualizado exitosamente",
+    "data": {
+        "enunciado": {
+            "id": 6,
+            "descripcion": "Crear una aplicación móvil con React Nativeeeeeee",
+            "fecha_limite": "2025-08-15T23:59:59.000000Z",
+            "created_at": "2025-05-30T10:38:34.000000Z",
+            "updated_at": "2025-05-30T11:06:45.000000Z"
+        },
+        "practica": {
+            "id": 3,
+            "titulo": "App Mobile Android",
+            "nombre": "Práctica Mobile",
+            "identificador": "MOB001"
+        },
+        "modulo": {
+            "id": 13,
+            "nombre": "Desarrollo Backend"
+        },
+        "profesor": {
+            "id": 11,
+            "name": "Juan Carlos",
+            "rol": "profesor"
+        },
+        "rubrica": {
+            "id": 5,
+            "nombre": "Rúbrica Redes"
+        },
+        "grupo": {
+            "id": 13,
+            "nombre": "Grupo de Prueba Profesor"
+        }
+    }
+}
+```
+
+#### **57. Eliminar Enunciado (Profesor)**
+**Endpoint:** `DELETE /api/profesor/enunciados/{id}`  
+**Middleware:** isProfesor
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Enunciado eliminado correctamente"
+}
+```
+
+#### **58. Actualizar Entrega (Profesor)**
+**Endpoint:** `PUT /api/profesor/entregas/{id}`  
+**Middleware:** isProfesor
+
+**Request:**
+```json
+{
+    "descripcion": "Entrega actualizada por el profesor",
+    "fecha_entrega": "2025-07-01T23:59:59",
+    "archivo_url": "https://nuevo-enlace.com/archivo.pdf",
+    "nota": 9.0,
+    "practica_id":5,
+    "user_id":6
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "entrega_id": 11,
+        "archivo": "fkaopfkafkafakp",
+        "fecha_entrega": "2025-07-01T23:59:59",
+        "practica_titulo": "Configuración de Redes",
+        "profesor_name": "Juan Carlos",
+        "profesor_surname": "Pérez García",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos"
+    },
+    "message": "Entrega actualizada correctamente"
+}
+```
+#### **59. Eliminar Entrega (Profesor)**
+**Endpoint:** `DELETE /api/profesor/entregas/{id}`  
+**Middleware:** isProfesor
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Entrega eliminada correctamente"
+}
+```
+
+#### **60. Actualizar Nota (Profesor)**
+**Endpoint:** `PUT /api/profesor/notas/{id}`  
+**Middleware:** isProfesor
+
+**Request:**
+```json
+{
+    "nota_final": 10,
+    "comentario": "Excelente proyecto, muy bien documentado",
+    "user_id": 6,
+    "entrega_id": 12,
+    "rubrica_id":10
+}
+```
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "nota_id": 13,
+        "nota_final": 10,
+        "comentario": "Excelente proyecto, muy bien documentado",
+        "alumno_name": "Sulaiman",
+        "alumno_surname": "El Taha Santos",
+        "evaluador_name": "Sulaiman",
+        "evaluador_surname": "El Taha Santos",
+        "rubrica_nombre": "Rúbrica Frontend"
+    },
+    "message": "Nota actualizada correctamente"
+}
+```
+
+#### **61. Eliminar Nota (Profesor)**
+**Endpoint:** `DELETE /api/profesor/notas/{id}`  
+**Middleware:** isProfesor
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "message": "Nota eliminada correctamente"
+}
+```
+
+
+#### **62. Obtener Información Completa del Profesor**
 **Endpoint:** `GET /api/profesor/usuariosGruposClases`  
 **Middleware:** isProfesor
 
@@ -1701,10 +2236,10 @@ class IsProfesor
 | **Categoría** | **Cantidad** | **Middleware** |
 |---------------|--------------|----------------|
 | Públicos | 2 | Ninguno |
-| Autenticados | 11 | isUserAuth |
-| Administrador | 14 | isAdmin |
-| Profesor | 20 | isProfesor |
-| **TOTAL** | **47** | **3 Middleware** |
+| Autenticados | 12 | isUserAuth |
+| Administrador | 21 | isAdmin |
+| Profesor | 27 | isProfesor |
+| **TOTAL** | **62** | **3 Middleware** |
 
 ---
 
@@ -1741,17 +2276,14 @@ Accept: application/json
 
 3. **Relaciones:** Muchos endpoints incluyen relaciones cargadas para evitar múltiples consultas.
 
-4. **Paginación:** Para listas grandes, considera implementar paginación en el frontend.
-
-5. **CORS:** Configurado para permitir requests desde diferentes dominios.
-
-6. **Rate Limiting:** Implementado para prevenir abuso de la API.
+4. **CORS:** Configurado para permitir requests desde diferentes dominios.
 
 ---
 
 ## 📞 **Soporte y Contacto**
 
 Para dudas, reportes de bugs o solicitudes de nuevas funcionalidades, contacta con el equipo de desarrollo.
+email: sulat3821@gmail.com
 
 **Fecha de última actualización:** Mayo 30, 2025  
 **Versión de la API:** v1.0  
